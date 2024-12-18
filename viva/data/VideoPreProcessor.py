@@ -40,6 +40,10 @@ class VideoPreProcessor:
         self.options = options if options is not None else VideoPreProcessingOptions()
         self.videos_paths = get_files(data_path, "*.mov", "*.mp4", "*.mkv", "*.avi", recursive=True)
 
+        # create face mesh estimator
+        self.face_mesh_estimator = vg.MediaPipeFaceMeshEstimator(max_num_faces=1)
+        self.face_mesh_estimator.setup()
+
     def process(self, num_workers: int = 4):
         # Create tasks
         tasks = [
@@ -87,17 +91,12 @@ class VideoPreProcessor:
                         future.result()
                         progress.advance(overall_task_id)
 
-    @staticmethod
-    def _process_task(task: VideoPreProcessingTask, progress: Progress):
+    def _process_task(self, task: VideoPreProcessingTask, progress: Progress):
         task_id = progress.add_task(description=f"Processing {task.video_path.name}", total=100)
 
         video_path = task.video_path
         result_path = task.result_path
         options = task.options
-
-        # create face mesh estimator
-        face_mesh_estimator = vg.MediaPipeFaceMeshEstimator(max_num_faces=1)
-        face_mesh_estimator.setup()
 
         # read stream info
         video_streams = ffmpegio.probe.video_streams_basic(str(video_path))
@@ -128,7 +127,7 @@ class VideoPreProcessor:
                 for frame_rgb in video_frames:
                     # todo: find out how to load BGR videos directly
                     frame = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
-                    results = face_mesh_estimator.process(frame)
+                    results = self.face_mesh_estimator.process(frame)
 
                     if len(results) > 0:
                         face_mesh = results[0]
