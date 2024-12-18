@@ -6,7 +6,7 @@ from typing import Optional
 import cv2
 import ffmpegio
 import numpy as np
-from rich.progress import Progress, TaskID, TextColumn, BarColumn, TimeRemainingColumn
+from rich.progress import Progress, TextColumn, BarColumn, TimeRemainingColumn
 from visiongraph import vg
 
 from viva.data.FaceLandmarkSeries import FaceLandmarkSeries
@@ -64,30 +64,33 @@ class VideoPreProcessor:
                 TimeRemainingColumn(),
                 transient=False
         ) as progress:
-            # Add tasks to the progress bar
-            task_map = {
-                progress.add_task(description=f"Processing {task.video_path.name}", total=100): task
-                for task in tasks
-            }
+            # Create an overall progress bar
+            overall_task_id = progress.add_task(description="Overall Progress", total=num_tasks)
 
+            # Sequential execution for debugging or single worker
             if actual_workers <= 1:
-                # Sequential execution for debugging
-                for task_id, task in task_map.items():
-                    self._process_task(task, progress, task_id)
+                for task in tasks:
+                    self._process_task(task, progress)
+                    progress.advance(overall_task_id)
             else:
                 # Parallel execution with ProcessPoolExecutor
                 with ThreadPoolExecutor(max_workers=actual_workers) as executor:
-                    futures = [
-                        executor.submit(self._process_task, task, progress, task_id)
-                        for task_id, task in task_map.items()
-                    ]
+                    futures = {}
+                    for task in tasks:
+                        # Submit tasks to executor and track their futures
+                        future = executor.submit(self._process_task, task, progress)
+                        futures[future] = task
 
-                    # Wait for all tasks to complete
+                    # Process tasks as workers become available
                     for future in as_completed(futures):
+                        # Wait for the future to complete
                         future.result()
+                        progress.advance(overall_task_id)
 
     @staticmethod
-    def _process_task(task: VideoPreProcessingTask, progress: Progress, task_id: TaskID):
+    def _process_task(task: VideoPreProcessingTask, progress: Progress):
+        task_id = progress.add_task(description=f"Processing {task.video_path.name}", total=100)
+
         video_path = task.video_path
         result_path = task.result_path
         options = task.options
