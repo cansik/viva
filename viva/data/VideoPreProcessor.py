@@ -1,5 +1,7 @@
+import time
 from concurrent.futures import as_completed, ThreadPoolExecutor
 from dataclasses import dataclass
+from datetime import timedelta
 from pathlib import Path
 from typing import Optional
 
@@ -62,11 +64,12 @@ class VideoPreProcessor:
         num_tasks = len(tasks)
         actual_workers = min(num_workers, num_tasks)
 
+        start_time = time.time()
         with Progress(
                 TextColumn("[progress.description]{task.description}"),
                 BarColumn(),
                 TimeRemainingColumn(),
-                transient=False
+                transient=True
         ) as progress:
             # Create an overall progress bar
             overall_task_id = progress.add_task(description="Overall Progress", total=num_tasks)
@@ -90,6 +93,9 @@ class VideoPreProcessor:
                         # Wait for the future to complete
                         future.result()
                         progress.advance(overall_task_id)
+
+        end_time = time.time()
+        print(f"It took {str(timedelta(seconds=end_time - start_time))} seconds to process.")
 
     def _process_task(self, task: VideoPreProcessingTask, progress: Progress):
         task_id = progress.add_task(description=f"Processing {task.video_path.name}", total=100)
