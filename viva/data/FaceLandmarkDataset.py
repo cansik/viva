@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import List
 
 import numpy as np
 from torch.utils.data import Dataset
@@ -15,7 +16,7 @@ class FaceLandmarkDataset(Dataset):
         self.block_length = block_length
 
         self.data_path = Path(data_path)
-        self.metadata_paths = get_files(data_path, "*.json", recursive=True)
+        self.metadata_paths = self._load_metadata_files()
 
         # create index for quick query lookup
         self.data_index = RangeMap[Path]()
@@ -31,6 +32,9 @@ class FaceLandmarkDataset(Dataset):
             self.data_index.add_range(current_index, max_index, metadata_path)
             current_index = max_index
         self.data_count = current_index
+
+    def _load_metadata_files(self) -> List[Path]:
+        return get_files(self.data_path, "*.json", recursive=True)
 
     def __len__(self) -> int:
         return self.data_count
