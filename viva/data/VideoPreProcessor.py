@@ -8,7 +8,7 @@ from typing import Optional
 import cv2
 import ffmpegio
 import numpy as np
-from rich.progress import Progress, TextColumn, BarColumn, TimeRemainingColumn
+from rich.progress import Progress, TextColumn, BarColumn, TimeRemainingColumn, MofNCompleteColumn
 from visiongraph import vg
 
 from viva.data.FaceLandmarkSeries import FaceLandmarkSeries
@@ -43,6 +43,7 @@ class VideoPreProcessor:
         self.videos_paths = get_files(data_path, "*.mov", "*.mp4", "*.mkv", "*.avi", recursive=True)
 
         # create face mesh estimator
+        # todo: improve by creating multiple workers for this
         self.face_mesh_estimator = vg.MediaPipeFaceMeshEstimator(max_num_faces=1)
         self.face_mesh_estimator.setup()
 
@@ -69,7 +70,7 @@ class VideoPreProcessor:
                 TextColumn("[progress.description]{task.description}"),
                 BarColumn(),
                 TimeRemainingColumn(),
-                transient=True
+                MofNCompleteColumn()
         ) as progress:
             # Create an overall progress bar
             overall_task_id = progress.add_task(description="Overall Progress", total=num_tasks)
@@ -131,8 +132,7 @@ class VideoPreProcessor:
 
                 # analyze video block
                 for frame_rgb in video_frames:
-                    # todo: find out how to load BGR videos directly
-                    frame = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
+                    frame = frame_rgb  # Loaded directly in BGR format
                     results = self.face_mesh_estimator.process(frame)
 
                     if len(results) > 0:
@@ -161,4 +161,5 @@ class VideoPreProcessor:
         landmark_series.save(result_path)
 
         progress.update(task_id, completed=total_video_frames)
+        progress.remove_task(task_id)
         return result_path
