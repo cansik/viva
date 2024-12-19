@@ -5,6 +5,8 @@ from typing import Optional
 
 import numpy as np
 
+_TYPE_INDICATOR = "FaceLandmarkSeries"
+
 
 @dataclass
 class FaceLandmarkSeries:
@@ -27,7 +29,7 @@ class FaceLandmarkSeries:
         path = Path(path)
 
         # Separate metadata and numpy arrays
-        metadata = {}
+        metadata = {"type": _TYPE_INDICATOR}
         arrays = {}
 
         for field in fields(self):
@@ -45,21 +47,22 @@ class FaceLandmarkSeries:
 
         # Save metadata as a JSON file
         metadata_path = path.with_suffix(".json")
-        with open(metadata_path, "w") as metadata_file:
-            json.dump(metadata, metadata_file)
+        metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
 
         # Save arrays as an NPZ file
         arrays_path = path.with_suffix(".npz")
         np.savez(arrays_path, **arrays)
 
     @staticmethod
-    def load(path: Path, metadata_only: bool = False) -> "FaceLandmarkSeries":
+    def load(path: Path, metadata_only: bool = False) -> Optional["FaceLandmarkSeries"]:
         path = Path(path)
 
         # Load metadata from the JSON file
         metadata_path = path.with_suffix(".json")
-        with open(metadata_path, "r") as metadata_file:
-            metadata = json.load(metadata_file)
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+
+        if "type" not in metadata or metadata.pop("type") != _TYPE_INDICATOR:
+            return None
 
         # Initialize the object with metadata
         obj = FaceLandmarkSeries(**metadata)

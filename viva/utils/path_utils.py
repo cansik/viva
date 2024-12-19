@@ -1,6 +1,6 @@
 import os
-from pathlib import Path
-from typing import List, Union
+from pathlib import Path, PosixPath
+from typing import List, Union, Any
 
 Pathable = Union[str, os.PathLike]
 
@@ -17,3 +17,9 @@ def get_files(path: Pathable, *filters: str, recursive: bool = False) -> List[Pa
         files.extend(method(pattern=filter_pattern))
 
     return list(sorted(set(files)))
+
+
+def path_serializer(obj: Any) -> str:
+    if isinstance(obj, PosixPath):
+        return str(obj)
+    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")

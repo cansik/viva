@@ -1,4 +1,5 @@
 import argparse
+import json
 import random
 from pathlib import Path
 
@@ -6,6 +7,7 @@ from rich.console import Console
 
 from viva.data.FaceLandmarkDataset import FaceLandmarkDataset
 from viva.modes.VivaBaseMode import VivaBaseMode
+from viva.utils.path_utils import path_serializer
 
 
 class DatasetMode(VivaBaseMode):
@@ -38,6 +40,7 @@ class DatasetMode(VivaBaseMode):
         valid_count = round(len(metadata_paths) * val_split_factor)
 
         dataset = {
+            "seed": seed,
             "train": metadata_paths[test_count + valid_count:],
             "test": metadata_paths[valid_count: valid_count + test_count],
             "val": metadata_paths[:valid_count]
@@ -48,10 +51,19 @@ class DatasetMode(VivaBaseMode):
         assert len(set(dataset["test"]).intersection(set(dataset["val"]))) == 0
         assert len(set(dataset["val"]).intersection(set(dataset["train"]))) == 0
 
+        # add counts
+        dataset["count"] = {
+            "train": len(dataset["train"]),
+            "test": len(dataset["test"]),
+            "val": len(dataset["val"])
+        }
+
         # store split in dataset cache files
-        output_path.mkdir(parents=True, exist_ok=True)
-        for name, paths in dataset.items():
-            (output_path / "")
+        if output_path.is_dir():
+            output_path = output_path / "dataset.json"
+
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(json.dumps(dataset, default=path_serializer, indent=2), encoding="utf-8")
 
     @staticmethod
     def _parse_args() -> argparse.Namespace:
@@ -60,6 +72,6 @@ class DatasetMode(VivaBaseMode):
         parser.add_argument("--output", default=None, type=str, help="Output path, by default dataset-path.")
         parser.add_argument("--split", action="store_true", help="Split dataset into train / val / test.")
         parser.add_argument("--seed", type=int, default=12345, help="Seed for dataset creation.")
-        parser.add_argument("--test-split", type=float, default=0.2, help="How many images will be used for test set.")
-        parser.add_argument("--val-split", type=float, default=0.2, help="How many images will be used for valid set.")
+        parser.add_argument("--test-split", type=float, default=0.1, help="How many images will be used for test set.")
+        parser.add_argument("--val-split", type=float, default=0.1, help="How many images will be used for valid set.")
         return parser.parse_args()

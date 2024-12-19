@@ -26,13 +26,23 @@ class FaceLandmarkDataset(Dataset):
     def _create_data_index(self):
         self.data_index.clear()
         current_index = 0
+
+        paths_to_remove = []
         for metadata_path in self.metadata_paths:
             series = FaceLandmarkSeries.load(metadata_path, metadata_only=True)
+
+            if series is None:
+                paths_to_remove.append(metadata_path)
+                continue
+
             # todo: what if block size is larger than actual samples?!
             max_index = current_index + max(series.sample_count - self.block_length, 1)
             self.data_index.add_range(current_index, max_index, metadata_path)
             current_index = max_index
         self.data_count = current_index
+
+        for path in paths_to_remove:
+            self.metadata_paths.remove(path)
 
     def _load_metadata_files(self) -> List[Path]:
         return get_files(self.data_path, "*.json", recursive=True)
