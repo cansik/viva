@@ -24,8 +24,8 @@ class PreProcessMode(VivaBaseMode):
                                             is_speaking=is_speaking,
                                             is_debug=is_debug)
 
-        p = VideoPreProcessor(data_path, output_path, options)
-        p.process(num_workers=num_workers)
+        p = VideoPreProcessor(data_path, output_path, options, num_workers)
+        p.process()
 
         self.console.print("done!")
 

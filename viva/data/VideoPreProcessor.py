@@ -13,6 +13,7 @@ from visiongraph import vg
 
 from viva.data.FaceLandmarkSeries import FaceLandmarkSeries
 from viva.utils.path_utils import Pathable, get_files
+from viva.vision.FaceMeshEstimatorPool import FaceMeshEstimatorPool
 
 
 @dataclass
@@ -33,21 +34,24 @@ class VideoPreProcessor:
     def __init__(self,
                  data_path: Pathable,
                  output_path: Pathable,
-                 options: Optional[VideoPreProcessingOptions] = None):
+                 options: Optional[VideoPreProcessingOptions] = None,
+                 num_workers: int = 4):
         self.data_path = Path(data_path)
         if not self.data_path.exists():
             raise FileNotFoundError(f"{self.data_path} does not exist!")
 
+        self.num_workers = num_workers
         self.output_path = Path(output_path)
         self.options = options if options is not None else VideoPreProcessingOptions()
         self.videos_paths = get_files(data_path, "*.mov", "*.mp4", "*.mkv", "*.avi", recursive=True)
 
-        # create face mesh estimator
-        # todo: improve by creating multiple workers for this
-        self.face_mesh_estimator = vg.MediaPipeFaceMeshEstimator(max_num_faces=1)
-        self.face_mesh_estimator.setup()
+        # create face mesh estimator pool
+        self.face_mesh_pool = FaceMeshEstimatorPool(self.num_workers)
 
-    def process(self, num_workers: int = 4):
+    def process(self):
+        # startup pol
+        self.face_mesh_pool.start()
+
         # Create tasks
         tasks = [
             VideoPreProcessingTask(
@@ -63,7 +67,7 @@ class VideoPreProcessor:
 
         # Adjust the number of workers based on the number of tasks
         num_tasks = len(tasks)
-        actual_workers = min(num_workers, num_tasks)
+        actual_workers = min(self.num_workers, num_tasks)
 
         start_time = time.time()
         with Progress(
@@ -95,6 +99,7 @@ class VideoPreProcessor:
                         future.result()
                         progress.advance(overall_task_id)
 
+        self.face_mesh_pool.stop()
         end_time = time.time()
         print(f"It took {str(timedelta(seconds=end_time - start_time))} seconds to process.")
 
@@ -124,6 +129,9 @@ class VideoPreProcessor:
         samples = []
         is_speaking_labels = []
 
+        face_mesh_estimator = self.face_mesh_pool.acquire()
+        face_mesh_estimator.reset()
+
         # read video and audio as stream
         frame_index = 0
         with ffmpegio.open(str(video_path), "rv", blocksize=options.stream_block_size) as fin:
@@ -133,7 +141,7 @@ class VideoPreProcessor:
                 # analyze video block
                 for frame_rgb in video_frames:
                     frame = frame_rgb  # Loaded directly in BGR format
-                    results = self.face_mesh_estimator.process(frame)
+                    results = face_mesh_estimator.process_frame(frame)
 
                     if len(results) > 0:
                         face_mesh = results[0]
@@ -152,6 +160,8 @@ class VideoPreProcessor:
 
                     progress.update(task_id, advance=1)
                     frame_index += 1
+
+        self.face_mesh_pool.release(face_mesh_estimator)
 
         # create and store series
         landmark_series = FaceLandmarkSeries(str(video_path), video_width, video_height, video_fps, len(samples),

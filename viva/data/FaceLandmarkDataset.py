@@ -28,7 +28,8 @@ class FaceLandmarkDataset(Dataset):
         current_index = 0
         for metadata_path in self.metadata_paths:
             series = FaceLandmarkSeries.load(metadata_path, metadata_only=True)
-            max_index = current_index + series.sample_count - self.block_length
+            # todo: what if block size is larger than actual samples?!
+            max_index = current_index + max(series.sample_count - self.block_length, 1)
             self.data_index.add_range(current_index, max_index, metadata_path)
             current_index = max_index
         self.data_count = current_index
