@@ -6,11 +6,13 @@ from rich.console import Console
 
 from viva.modes.DatasetMode import DatasetMode
 from viva.modes.PreProcessMode import PreProcessMode
+from viva.modes.TrainMode import TrainMode
 from viva.modes.VivaBaseMode import VivaBaseMode
 
 viva_modes: Dict[str, Type[VivaBaseMode]] = {
     "preprocess": PreProcessMode,
-    "dataset": DatasetMode
+    "dataset": DatasetMode,
+    "train": TrainMode
 }
 
 

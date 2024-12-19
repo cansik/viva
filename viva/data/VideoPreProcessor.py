@@ -127,6 +127,7 @@ class VideoPreProcessor:
 
         video_frame_indices = []
         samples = []
+        transforms = []
         is_speaking_labels = []
 
         face_mesh_estimator = self.face_mesh_pool.acquire()
@@ -146,10 +147,12 @@ class VideoPreProcessor:
                     if len(results) > 0:
                         face_mesh = results[0]
                         landmarks = vg.vector_to_array(face_mesh.landmarks)
+                        transform = face_mesh.transformation_matrix
 
                         # add data to lists
                         video_frame_indices.append(frame_index)
                         samples.append(landmarks)
+                        transforms.append(transform)
                         is_speaking_labels.append(options.is_speaking)
 
                         if options.is_debug:
@@ -167,6 +170,7 @@ class VideoPreProcessor:
         landmark_series = FaceLandmarkSeries(str(video_path), video_width, video_height, video_fps, len(samples),
                                              np.array(video_frame_indices, dtype=np.uint32),
                                              np.array(samples, dtype=np.float32),
+                                             np.array(transforms, dtype=np.float32),
                                              np.array(is_speaking_labels, dtype=bool))
         landmark_series.save(result_path)
 

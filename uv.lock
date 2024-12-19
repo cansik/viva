@@ -1056,7 +1056,7 @@ wheels = [
 
 [[package]]
 name = "visiongraph"
-version = "1.0.0"
+version = "1.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
@@ -1067,7 +1067,7 @@ dependencies = [
     { name = "vector" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cc/42/262f24630ef893e635a4487d91b8f7fc8fb724f5b83649819716869daf10/visiongraph-1.0.0-py3-none-any.whl", hash = "sha256:17e028f86d6a242675066e03347b7270b0cb2546921a4cff81d7be68f4631c31", size = 354947 },
+    { url = "https://files.pythonhosted.org/packages/9b/ed/d925a4138d7df9173f757e2dc7ba47ab3d31e4638e93ceb1dfada413c8fa/visiongraph-1.0.1-py3-none-any.whl", hash = "sha256:9401381622c75df8d2c1b14185ef07dba23615691a2ba96431f10f48eb5b0fdb", size = 350296 },
 ]
 
 [package.optional-dependencies]
@@ -1095,5 +1095,5 @@ requires-dist = [
     { name = "sortedcontainers", specifier = ">=2.4.0" },
     { name = "torch", marker = "platform_system != 'Darwin'", specifier = ">=2.5.1", index = "https://download.pytorch.org/whl/cu124" },
     { name = "torch", marker = "platform_system == 'Darwin'", specifier = ">=2.5.1" },
-    { name = "visiongraph", extras = ["mediapipe"], specifier = ">=1.0.0" },
+    { name = "visiongraph", extras = ["mediapipe"], specifier = "~=1.0.1" },
 ]

@@ -22,6 +22,9 @@ class FaceLandmarkSeries:
     # samples array (n, 487, 5) float32
     samples: Optional[np.ndarray] = None
 
+    # transform matrices array (n, 4, 4) float32
+    transforms: Optional[np.ndarray] = None
+
     # is speaking labels (n,) bool
     speaking_labels: Optional[np.ndarray] = None
 

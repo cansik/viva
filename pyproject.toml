@@ -9,7 +9,7 @@ dependencies = [
     "rich>=13.9.4",
     "sortedcontainers>=2.4.0",
     "torch>=2.5.1",
-    "visiongraph[mediapipe]>=1.0.0",
+    "visiongraph[mediapipe]~=1.0.1",
 ]
 
 [tool.uv.sources]

@@ -28,7 +28,8 @@ class FaceMeshWorker(Process):
     def _run_loop(self):
         logger.debug(f"Worker {self.worker_id}: Starting run loop.")
         # Start face-mesh estimator
-        self.face_mesh_estimator = vg.MediaPipeFaceMeshEstimator(max_num_faces=1)
+        self.face_mesh_estimator = vg.MediaPipeFaceMeshEstimator(max_num_faces=1,
+                                                                 output_facial_transformation_matrixes=True)
         self.face_mesh_estimator.setup()
         logger.debug(f"Worker {self.worker_id}: FaceMeshEstimator initialized.")
 
