@@ -11,7 +11,7 @@ from viva.data.FaceLandmarkDataset import FaceLandmarkDataset
 class BaseTrainOptions:
     # training
     batch_size: int = 32
-    max_epochs: int = 10
+    max_epochs: int = 100
     num_workers: int = 4
 
     # dataset

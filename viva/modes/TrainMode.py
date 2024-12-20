@@ -49,11 +49,11 @@ class TrainMode(VivaBaseMode):
 
         # Create DataLoaders
         train_loader = DataLoader(train_dataset, batch_size=options.batch_size, shuffle=True,
-                                  num_workers=options.num_workers)
+                                  num_workers=options.num_workers, persistent_workers=True)
         val_loader = DataLoader(val_dataset, batch_size=options.batch_size, shuffle=False,
-                                num_workers=options.num_workers)
+                                num_workers=options.num_workers, persistent_workers=True)
         test_loader = DataLoader(test_dataset, batch_size=options.batch_size, shuffle=False,
-                                 num_workers=options.num_workers)
+                                 num_workers=options.num_workers, persistent_workers=True)
 
         # Create Model
         model = strategy.create_lighting_module()

@@ -44,7 +44,7 @@ class FaceLandmarkDataset(Dataset):
         for metadata_path in self.metadata_paths:
             series = FaceLandmarkSeries.load(metadata_path, metadata_only=True)
 
-            if series is None:
+            if series is None or series.sample_count < self.block_length:
                 paths_to_remove.append(metadata_path)
                 continue
 
