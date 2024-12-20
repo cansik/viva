@@ -23,10 +23,9 @@ class InspectMode(VivaBaseMode):
         dataset_mode = str(args.mode)
         block_size = int(args.block_size)
 
-        # load datasets
+        # load dataset
         data = json.loads(dataset_path.read_text(encoding="utf-8"))
-
-        dataset = FaceLandmarkDataset.from_list(data[dataset_mode], block_size)
+        dataset = FaceLandmarkDataset(metadata_paths=data[dataset_mode], block_length=block_size)
 
         for video_path in dataset.metadata_paths:
             series = FaceLandmarkSeries.load(video_path)

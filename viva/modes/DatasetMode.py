@@ -21,7 +21,7 @@ class DatasetMode(VivaBaseMode):
         is_split = bool(args.split)
 
         with self.console.status("loading dataset"):
-            dataset = FaceLandmarkDataset(dataset_path)
+            dataset = FaceLandmarkDataset(data_path=dataset_path)
 
         if is_split:
             with self.console.status("splitting dataset"):

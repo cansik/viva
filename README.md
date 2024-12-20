@@ -32,6 +32,13 @@ python viva dataset --split ./wildvvad
 
 It creates a `dataset.json` which has the paths to the necessary files.
 
+### Training
+Now, we are ready to train using the `viva train` tool.
+
+```bash
+tbd
+```
+
 ## Tools
 
 - Dataset preparation (load all videos and analyse them with whisper speech / simplified audio analysis pipeline)

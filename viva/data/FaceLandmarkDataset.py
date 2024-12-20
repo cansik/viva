@@ -5,18 +5,29 @@ import numpy as np
 from torch.utils.data import Dataset
 
 from viva.data.FaceLandmarkSeries import FaceLandmarkSeries
+from viva.data.augmentations.BaseLandmarkAugmentation import BaseLandmarkAugmentation
 from viva.utils.RangeMap import RangeMap, RangeResult
 from viva.utils.path_utils import Pathable, get_files
 
 
 class FaceLandmarkDataset(Dataset):
 
-    def __init__(self, data_path: Optional[Pathable] = None, block_length: int = 15):
+    def __init__(self,
+                 data_path: Optional[Pathable] = None,
+                 metadata_paths: Optional[List[Pathable]] = None,
+                 block_length: int = 15,
+                 augmentations: Optional[List[BaseLandmarkAugmentation]] = None):
         super().__init__()
         self.block_length = block_length
 
         self.data_path: Optional[Path] = Path(data_path) if data_path is not None else None
-        self.metadata_paths: List[Path] = self._load_metadata_files() if data_path is not None else []
+        self.metadata_paths: List[Path] = self._load_metadata_files() if data_path is not None else metadata_paths
+
+        if self.metadata_paths is None:
+            raise ValueError("Please either provide a data path or existing metadata path list!")
+
+        # pre-processing
+        self.augmentations: List[BaseLandmarkAugmentation] = [] if augmentations is None else augmentations
 
         # create index for quick query lookup
         self.data_index = RangeMap[Path]()
@@ -61,7 +72,7 @@ class FaceLandmarkDataset(Dataset):
     def __len__(self) -> int:
         return self.data_count
 
-    def __getitem__(self, index: int):
+    def __getitem__(self, index: int) -> Tuple[np.ndarray, np.ndarray]:
         series, range_result = self.get_series(index)
 
         start_index = index - range_result.start
@@ -70,11 +81,23 @@ class FaceLandmarkDataset(Dataset):
         x = series.samples[start_index:end_index]
         y = series.speaking_labels[start_index:end_index].astype(np.float32)
 
-        return x, y
+        # augment landmarks
+        x, y = self.apply_augmentations(x, y, series, start_index, end_index)
 
-    @staticmethod
-    def from_list(paths: List[Path], block_length: int = 15) -> "FaceLandmarkDataset":
-        dataset = FaceLandmarkDataset(block_length=block_length)
-        dataset.metadata_paths = paths
-        dataset.create_data_index()
-        return dataset
+        return x.astype(np.float32), y.astype(np.float32)
+
+    def apply_augmentations(self, x: np.ndarray, y: np.ndarray, series: FaceLandmarkSeries,
+                            start_index: int, end_index: int) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Apply a list of augmentations to the landmarks and labels.
+
+        :param x: Landmark data, typically a numpy array.
+        :param y: Labels corresponding to the landmarks, typically a numpy array.
+        :param series: FaceLandmarkSeries containing all relevant series information.
+        :param start_index: Start index of the current sequence inside the series.
+        :param end_index: End index of the current sequence inside the series.
+        :return: Tuple of augmented landmarks (x) and labels (y).
+        """
+        for augmentation in self.augmentations:
+            x, y = augmentation(x, y, series, start_index, end_index)
+        return x, y

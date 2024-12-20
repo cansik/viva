@@ -6,10 +6,12 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "ffmpegio>=0.10.0.post0",
+    "lightning>=2.4.0",
     "rich>=13.9.4",
     "sortedcontainers>=2.4.0",
+    "tensorboardx>=2.6.2.2",
     "torch>=2.5.1",
-    "visiongraph[mediapipe]~=1.0.1.1",
+    "visiongraph[mediapipe]~=1.0.1.2",
 ]
 
 [tool.uv.sources]
