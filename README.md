@@ -27,7 +27,7 @@ This takes a bit of time, but it is optimized to use multi-processing. Please us
 After that, create the dataset split using the `viva dataset` tool.
 
 ```bash
-python viva dataset --split ./wildvvad
+python -m viva dataset --split ./wildvvad
 ```
 
 It creates a `dataset.json` which has the paths to the necessary files.
@@ -36,7 +36,7 @@ It creates a `dataset.json` which has the paths to the necessary files.
 Now, we are ready to train using the `viva train` tool.
 
 ```bash
-tbd
+python -m viva train wildvvad/dataset.json block-tcn
 ```
 
 ## Tools
