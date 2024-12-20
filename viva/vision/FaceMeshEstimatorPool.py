@@ -25,6 +25,10 @@ class FaceMeshWorker(Process):
         self.tasks: Queue[Optional[FaceMeshTask]] = Queue(maxsize=task_queue_size)
         self.results: Queue[vg.ResultList[vg.BlazeFaceMesh]] = Queue(maxsize=task_queue_size)
 
+        # this is used to generate a monotonic time
+        self.frame_ts_id = 0
+        self.frame_fps = 30
+
         # prepare face mesh estimator
         estimator = vg.MediaPipeFaceMeshEstimator()
         estimator.task.prepare()
@@ -46,8 +50,10 @@ class FaceMeshWorker(Process):
                 continue
 
             logger.debug(f"Worker {self.worker_id}: Processing frame.")
-            result = self.face_mesh_estimator.process(task.data)
+            timestamp_ms = int(self.frame_ts_id * (1000 / self.frame_fps))
+            result = self.face_mesh_estimator.process(task.data, timestamp_ms=timestamp_ms)
             self.results.put(result)
+            self.frame_ts_id += 1
             logger.debug(f"Worker {self.worker_id}: Frame processed successfully.")
 
         logger.debug(f"Worker {self.worker_id}: Releasing resources.")
