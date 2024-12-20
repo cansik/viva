@@ -32,7 +32,7 @@ class TrainMode(VivaBaseMode):
 
     @staticmethod
     def _parse_args() -> argparse.Namespace:
-        parser = argparse.ArgumentParser(prog="viva preprocess")
+        parser = argparse.ArgumentParser(prog="viva train")
         parser.add_argument("dataset", type=str, help="Path to the dataset file.")
         parser.add_argument("--block-size", type=int, default=15,
                             help="Dataset block-size (how much data per inference block).")

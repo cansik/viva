@@ -141,7 +141,8 @@ class VideoPreProcessor:
 
                 # analyze video block
                 for frame_rgb in video_frames:
-                    frame = frame_rgb  # Loaded directly in BGR format
+                    # todo: loading directly in BGR format
+                    frame = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
                     results = face_mesh_estimator.process_frame(frame)
 
                     if len(results) > 0:

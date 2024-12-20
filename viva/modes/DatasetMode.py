@@ -67,7 +67,7 @@ class DatasetMode(VivaBaseMode):
 
     @staticmethod
     def _parse_args() -> argparse.Namespace:
-        parser = argparse.ArgumentParser()
+        parser = argparse.ArgumentParser(prog="viva dataset")
         parser.add_argument("dataset", type=str, help="Dataset path.")
         parser.add_argument("--output", default=None, type=str, help="Output path, by default dataset-path.")
         parser.add_argument("--split", action="store_true", help="Split dataset into train / val / test.")
