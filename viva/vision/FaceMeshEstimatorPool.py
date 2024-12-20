@@ -25,6 +25,9 @@ class FaceMeshWorker(Process):
         self.tasks: Queue[Optional[FaceMeshTask]] = Queue(maxsize=task_queue_size)
         self.results: Queue[vg.ResultList[vg.BlazeFaceMesh]] = Queue(maxsize=task_queue_size)
 
+        # prepare face mesh estimator
+        self.face_mesh_estimator.task.prepare()
+
     def _run_loop(self):
         logger.debug(f"Worker {self.worker_id}: Starting run loop.")
         # Start face-mesh estimator
