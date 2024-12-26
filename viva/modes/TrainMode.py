@@ -52,8 +52,6 @@ class TrainMode(VivaBaseMode):
                                   num_workers=options.num_workers, persistent_workers=True)
         val_loader = DataLoader(val_dataset, batch_size=options.batch_size, shuffle=False,
                                 num_workers=options.num_workers, persistent_workers=True)
-        test_loader = DataLoader(test_dataset, batch_size=options.batch_size, shuffle=False,
-                                 num_workers=options.num_workers, persistent_workers=True)
 
         # Create Model
         model = strategy.create_lighting_module()
@@ -68,10 +66,12 @@ class TrainMode(VivaBaseMode):
         trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
 
         # Test the model
-        trainer.test(model, test_loader)
+        # test_loader = DataLoader(test_dataset, batch_size=options.batch_size, shuffle=False,
+        #                          num_workers=options.num_workers, persistent_workers=True)
+        # trainer.test(model, test_loader)
 
         # Save the trained model
-        model_path = options.log_dir / f"{model.__class__.__name__}.ckpt"
+        model_path = Path(options.log_dir) / f"{model.__class__.__name__}.ckpt"
         trainer.save_checkpoint(model_path)
 
         print(f"Model {model.__class__.__name__} saved at {model_path}")
