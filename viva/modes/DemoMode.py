@@ -43,7 +43,7 @@ class TCNPredictor:
 
         # Get the current buffer state and convert to a PyTorch tensor
         tensor_landmarks = torch.tensor(self.buffer.get(), dtype=torch.float32).unsqueeze(0)
-        tensor_landmarks = tensor_landmarks.to("mps")
+        tensor_landmarks = tensor_landmarks.to(self.model.device)
 
         # Perform prediction
         logits = self.model(tensor_landmarks)
