@@ -12,7 +12,7 @@ class BaseTrainOptions:
     # training
     batch_size: int = 32
     max_epochs: int = 100
-    num_workers: int = 6
+    num_workers: int = 2
 
     # dataset
     block_size: int = 15

@@ -17,11 +17,9 @@ class FaceLandmarkDataset(Dataset):
                  data_path: Optional[Pathable] = None,
                  metadata_paths: Optional[List[Pathable]] = None,
                  block_length: int = 15,
-                 augmentations: Optional[List[BaseLandmarkAugmentation]] = None,
-                 cached: bool = False):
+                 augmentations: Optional[List[BaseLandmarkAugmentation]] = None):
         super().__init__()
         self.block_length = block_length
-        self._cached = cached
 
         self.data_path: Optional[Path] = Path(data_path) if data_path is not None else None
         self.metadata_paths: List[Path] = self._load_metadata_files() if data_path is not None else metadata_paths
