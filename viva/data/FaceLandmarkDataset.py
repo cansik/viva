@@ -5,7 +5,7 @@ import numpy as np
 from torch.utils.data import Dataset
 
 from viva.data import zarr_io
-from viva.data.FaceLandmarkSeries import FaceLandmarkSeries
+from viva.data.FaceLandmarkSeries import FaceLandmarkSeries, load_face_landmark_series_in_parallel
 from viva.data.augmentations.BaseLandmarkAugmentation import BaseLandmarkAugmentation
 from viva.utils.RangeMap import RangeMap, RangeResult
 from viva.utils.path_utils import Pathable, get_files
@@ -17,9 +17,11 @@ class FaceLandmarkDataset(Dataset):
                  data_path: Optional[Pathable] = None,
                  metadata_paths: Optional[List[Pathable]] = None,
                  block_length: int = 15,
-                 augmentations: Optional[List[BaseLandmarkAugmentation]] = None):
+                 augmentations: Optional[List[BaseLandmarkAugmentation]] = None,
+                 cached: bool = False):
         super().__init__()
         self.block_length = block_length
+        self._cached = cached
 
         self.data_path: Optional[Path] = Path(data_path) if data_path is not None else None
         self.metadata_paths: List[Path] = self._load_metadata_files() if data_path is not None else metadata_paths
@@ -27,36 +29,41 @@ class FaceLandmarkDataset(Dataset):
         if self.metadata_paths is None:
             raise ValueError("Please either provide a data path or existing metadata path list!")
 
+        # data
+        self.dataset: List[FaceLandmarkSeries] = []
+
         # pre-processing
         self.augmentations: List[BaseLandmarkAugmentation] = [] if augmentations is None else augmentations
 
         # create index for quick query lookup
-        self.data_index = RangeMap[Path]()
+        self.data_index = RangeMap[int]()
         self.data_count = 0
         self.create_data_index()
 
     def create_data_index(self):
+        self.dataset.clear()
         self.data_index.clear()
         self.data_count = 0
 
         current_index = 0
 
-        paths_to_remove = []
-        for metadata_path in self.metadata_paths:
-            series = FaceLandmarkSeries.load(metadata_path, metadata_only=True)
+        # load data in parallel (faster)
+        all_series = load_face_landmark_series_in_parallel(self.metadata_paths)
 
+        # filter and create index
+        for i, (series, metadata_path) in enumerate(list(zip(all_series, self.metadata_paths))):
             if series is None or series.sample_count < self.block_length:
-                paths_to_remove.append(metadata_path)
+                self.metadata_paths.pop(i)
+                all_series.pop(i)
                 continue
 
             # todo: what if block size is larger than actual samples?!
             max_index = current_index + max(series.sample_count - self.block_length, 1)
-            self.data_index.add_range(current_index, max_index, metadata_path)
+            self.data_index.add_range(current_index, max_index, i)
             current_index = max_index
-        self.data_count = current_index
 
-        for path in paths_to_remove:
-            self.metadata_paths.remove(path)
+        self.data_count = current_index
+        self.dataset = all_series
 
     def _load_metadata_files(self) -> List[Path]:
         if not self.data_path.is_dir():
@@ -66,9 +73,7 @@ class FaceLandmarkDataset(Dataset):
 
     def get_series(self, index: int) -> Tuple[FaceLandmarkSeries, RangeResult]:
         range_result = self.data_index[index]
-        metadata_path = Path(range_result.value)
-
-        return FaceLandmarkSeries.load(metadata_path.with_suffix(".npz")), range_result
+        return self.dataset[range_result.value], range_result
 
     def __len__(self) -> int:
         return self.data_count
