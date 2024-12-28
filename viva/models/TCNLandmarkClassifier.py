@@ -4,6 +4,7 @@ import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torchmetrics
 
 
 class TemporalBlock(nn.Module):
@@ -103,7 +104,7 @@ class TCNLandmarkClassifier(pl.LightningModule):
             loss_fn: Callable = nn.CrossEntropyLoss()
     ):
         super(TCNLandmarkClassifier, self).__init__()
-        self.save_hyperparameters()
+        self.save_hyperparameters(ignore=['loss_fn'])
 
         self.model = TCN(
             input_size=self.hparams.input_size,
@@ -112,7 +113,11 @@ class TCNLandmarkClassifier(pl.LightningModule):
             kernel_size=self.hparams.kernel_size,
             dropout=self.hparams.dropout,
         )
-        self.loss_fn = self.hparams.loss_fn
+        self.loss_fn = loss_fn
+
+        # Add accuracy metric
+        self.train_accuracy = torchmetrics.Accuracy(task="multiclass", num_classes=self.hparams.num_classes)
+        self.val_accuracy = torchmetrics.Accuracy(task="multiclass", num_classes=self.hparams.num_classes)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # Reshape input for TCN (B, T, C) -> (B, C, T)
@@ -123,6 +128,12 @@ class TCNLandmarkClassifier(pl.LightningModule):
         x, y = batch
         logits = self(x)
         loss = self.loss_fn(logits, y)
+
+        # Update and log accuracy
+        preds = torch.argmax(logits, dim=1)
+        self.train_accuracy.update(preds, y.argmax(dim=1))
+        self.log("train_acc", self.train_accuracy, on_step=True, on_epoch=True, prog_bar=True)
+
         self.log("train_loss", loss)
         return loss
 
@@ -130,8 +141,22 @@ class TCNLandmarkClassifier(pl.LightningModule):
         x, y = batch
         logits = self(x)
         loss = self.loss_fn(logits, y)
+
+        # Update and log accuracy
+        preds = torch.argmax(logits, dim=1)
+        self.val_accuracy.update(preds, y.argmax(dim=1))
+        self.log("val_acc", self.val_accuracy, on_step=False, on_epoch=True, prog_bar=True)
+
         self.log("val_loss", loss, prog_bar=True)
         return loss
 
     def configure_optimizers(self) -> optim.Optimizer:
         return optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
+
+    def on_train_epoch_end(self):
+        # Reset metrics at the end of the epoch
+        self.train_accuracy.reset()
+
+    def on_validation_epoch_end(self):
+        # Reset metrics at the end of the epoch
+        self.val_accuracy.reset()
