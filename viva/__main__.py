@@ -5,6 +5,7 @@ from typing import Dict, Type, Tuple, List
 from rich.console import Console
 
 from viva.modes.DatasetMode import DatasetMode
+from viva.modes.DemoMode import DemoMode
 from viva.modes.InspectMode import InspectMode
 from viva.modes.PreProcessMode import PreProcessMode
 from viva.modes.TrainMode import TrainMode
@@ -15,6 +16,7 @@ viva_modes: Dict[str, Type[VivaBaseMode]] = {
     "dataset": DatasetMode,
     "inspect": InspectMode,
     "train": TrainMode,
+    "demo": DemoMode,
 }
 
 

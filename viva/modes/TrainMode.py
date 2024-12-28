@@ -69,8 +69,7 @@ class TrainMode(VivaBaseMode):
 
         # Define Model Checkpoints
         checkpoint_callback = ModelCheckpoint(
-            dirpath=log_dir,
-            filename="{epoch}-{val_loss:.2f}",
+            filename="best",
             monitor="val_loss",  # Metric to monitor
             mode="min",  # Mode can be 'min' for loss or 'max' for accuracy/metrics
             save_last=True,  # Save the last epoch's model
