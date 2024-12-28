@@ -12,6 +12,7 @@ dependencies = [
     "tensorboardx>=2.6.2.2",
     "torch>=2.5.1",
     "visiongraph[mediapipe]~=1.0.1.2",
+    "zarr>=2.18.4",
 ]
 
 [tool.uv.sources]

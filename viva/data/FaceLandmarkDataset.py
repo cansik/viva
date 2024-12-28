@@ -4,6 +4,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 from torch.utils.data import Dataset
 
+from viva.data import zarr_io
 from viva.data.FaceLandmarkSeries import FaceLandmarkSeries
 from viva.data.augmentations.BaseLandmarkAugmentation import BaseLandmarkAugmentation
 from viva.utils.RangeMap import RangeMap, RangeResult
@@ -101,3 +102,7 @@ class FaceLandmarkDataset(Dataset):
         for augmentation in self.augmentations:
             x, y = augmentation(x, y, series, start_index, end_index)
         return x, y
+
+    def save_as_zarr(self, zarr_path: Pathable):
+        data = [FaceLandmarkSeries.load(p) for p in self.metadata_paths]
+        zarr_io.save_to_zarr(data, zarr_path)
