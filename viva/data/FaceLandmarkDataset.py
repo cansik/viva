@@ -5,8 +5,9 @@ import numpy as np
 from torch.utils.data import Dataset
 
 from viva.data import zarr_io
-from viva.data.FaceLandmarkSeries import FaceLandmarkSeries, load_face_landmark_series_in_parallel
+from viva.data.FaceLandmarkSeries import FaceLandmarkSeries
 from viva.data.augmentations.BaseLandmarkAugmentation import BaseLandmarkAugmentation
+from viva.data.face_landmark_io import load_face_landmark_series_in_parallel
 from viva.utils.RangeMap import RangeMap, RangeResult
 from viva.utils.path_utils import Pathable, get_files
 
@@ -17,6 +18,7 @@ class FaceLandmarkDataset(Dataset):
                  data_path: Optional[Pathable] = None,
                  metadata_paths: Optional[List[Pathable]] = None,
                  block_length: int = 15,
+                 transforms: Optional[List[BaseLandmarkAugmentation]] = None,
                  augmentations: Optional[List[BaseLandmarkAugmentation]] = None):
         super().__init__()
         self.block_length = block_length
@@ -31,6 +33,7 @@ class FaceLandmarkDataset(Dataset):
         self.dataset: List[FaceLandmarkSeries] = []
 
         # pre-processing
+        self.transforms: List[BaseLandmarkAugmentation] = [] if transforms is None else transforms
         self.augmentations: List[BaseLandmarkAugmentation] = [] if augmentations is None else augmentations
 
         # create index for quick query lookup
@@ -46,7 +49,7 @@ class FaceLandmarkDataset(Dataset):
         current_index = 0
 
         # load data in parallel (faster)
-        all_series = load_face_landmark_series_in_parallel(self.metadata_paths)
+        all_series = load_face_landmark_series_in_parallel(self.metadata_paths, self.transforms)
 
         # filter and create index
         for i, (series, metadata_path) in enumerate(list(zip(all_series, self.metadata_paths))):
@@ -92,16 +95,6 @@ class FaceLandmarkDataset(Dataset):
 
     def apply_augmentations(self, x: np.ndarray, y: np.ndarray, series: FaceLandmarkSeries,
                             start_index: int, end_index: int) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Apply a list of augmentations to the landmarks and labels.
-
-        :param x: Landmark data, typically a numpy array.
-        :param y: Labels corresponding to the landmarks, typically a numpy array.
-        :param series: FaceLandmarkSeries containing all relevant series information.
-        :param start_index: Start index of the current sequence inside the series.
-        :param end_index: End index of the current sequence inside the series.
-        :return: Tuple of augmented landmarks (x) and labels (y).
-        """
         for augmentation in self.augmentations:
             x, y = augmentation(x, y, series, start_index, end_index)
         return x, y

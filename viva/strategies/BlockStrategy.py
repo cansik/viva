@@ -29,17 +29,20 @@ class BlockStrategy(BaseTrainStrategy[BlockStrategyOptions]):
         return self._options
 
     def create_lighting_module(self) -> pl.LightningModule:
+        # return SimpleMLPClassifier(input_size=15 * len(vg.BlazeFaceMesh.FEATURES_148) * 3)
         return TCNLandmarkClassifier(input_size=len(vg.BlazeFaceMesh.FEATURES_148) * 3)
 
     @property
     def dataset_type(self) -> Union[Type[FaceLandmarkDataset], Callable[..., FaceLandmarkDataset]]:
-        augmentations = [
+        transforms = [
             NormalizeLandmarks(),
-            FilterLandmarkIndices(vg.BlazeFaceMesh.FEATURES_148),
-            FlattenLandmarks(),
+            FilterLandmarkIndices(vg.BlazeFaceMesh.FEATURES_148)
+        ]
 
+        augmentations = [
+            FlattenLandmarks(full=False),
             CollapseLabels(),
             OneHotEncodeLabels()
         ]
 
-        return partial(FaceLandmarkDataset, augmentations=augmentations)
+        return partial(FaceLandmarkDataset, transforms=transforms, augmentations=augmentations)

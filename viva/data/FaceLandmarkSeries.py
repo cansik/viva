@@ -1,13 +1,9 @@
 import json
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import fields, dataclass
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional
 
 import numpy as np
-from tqdm import tqdm
-
-from viva.utils.path_utils import Pathable
 
 _TYPE_INDICATOR = "FaceLandmarkSeries"
 
@@ -83,16 +79,3 @@ class FaceLandmarkSeries:
 
         return obj
 
-
-def load_face_landmark_series_in_parallel(paths: List[Pathable],
-                                          max_threads: int = 4,
-                                          show_progress: bool = True) -> List[FaceLandmarkSeries]:
-    series = []
-
-    with ThreadPoolExecutor(max_threads) as executor:
-        # Use a thread-safe progress bar
-        futures = list(tqdm(executor.map(FaceLandmarkSeries.load, paths),
-                            desc="loading series", total=len(paths), disable=not show_progress))
-        series.extend(futures)
-
-    return series

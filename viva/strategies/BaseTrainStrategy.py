@@ -12,13 +12,16 @@ class BaseTrainOptions:
     # training
     batch_size: int = 32
     max_epochs: int = 100
-    num_workers: int = 2
+    num_workers: int = 4
 
     # dataset
     block_size: int = 15
 
     # output
     log_dir: str = "runs"
+
+    # debug
+    profile: bool = False
 
     def overwrite_options(self, training_options: List[str]) -> None:
         # Convert name=value pairs to a dictionary

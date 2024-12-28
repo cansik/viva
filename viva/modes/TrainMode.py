@@ -4,12 +4,14 @@ from pathlib import Path
 from typing import Dict, List, Type
 
 from pytorch_lightning import Trainer
+from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.loggers import TensorBoardLogger
+from pytorch_lightning.profilers import SimpleProfiler
 from rich.console import Console
 from torch.utils.data import DataLoader
 
 from viva.modes.VivaBaseMode import VivaBaseMode
-from viva.strategies.BaseTrainStrategy import BaseTrainStrategy
+from viva.strategies.BaseTrainStrategy import BaseTrainStrategy, BaseTrainOptions
 from viva.strategies.BlockStrategy import BlockStrategy
 
 train_strategies: Dict[str, Type[BaseTrainStrategy]] = {
@@ -29,14 +31,13 @@ class TrainMode(VivaBaseMode):
         training_overrides: List[str] = args.training_overrides
 
         # Create options and override them
-        options = strategy.options
+        options: BaseTrainOptions = strategy.options
         options.overwrite_options(training_overrides)
 
         # Load datasets
         data = json.loads(dataset_path.read_text(encoding="utf-8"))
 
         train_dataset = strategy.dataset_type(metadata_paths=data["train"], block_length=options.block_size)
-        test_dataset = strategy.dataset_type(metadata_paths=data["test"], block_length=options.block_size)
         val_dataset = strategy.dataset_type(metadata_paths=data["val"], block_length=options.block_size)
 
         x, y = train_dataset[0]
@@ -49,9 +50,9 @@ class TrainMode(VivaBaseMode):
 
         # Create DataLoaders
         train_loader = DataLoader(train_dataset, batch_size=options.batch_size, shuffle=True,
-                                  num_workers=options.num_workers, persistent_workers=True)
+                                  num_workers=options.num_workers, persistent_workers=True, pin_memory=True)
         val_loader = DataLoader(val_dataset, batch_size=options.batch_size, shuffle=False,
-                                num_workers=options.num_workers, persistent_workers=True)
+                                num_workers=options.num_workers, persistent_workers=True, pin_memory=True)
 
         # Create Model
         model = strategy.create_lighting_module()
@@ -59,22 +60,48 @@ class TrainMode(VivaBaseMode):
         # TensorBoard Logger
         logger = TensorBoardLogger(save_dir=log_dir, name=model.__class__.__name__)
 
+        early_stopping = EarlyStopping(
+            monitor="val_loss",
+            mode="min",
+            patience=5,  # Number of epochs with no improvement before stopping
+            verbose=True
+        )
+
+        # Define Model Checkpoints
+        checkpoint_callback = ModelCheckpoint(
+            dirpath=log_dir,
+            filename="{epoch}-{val_loss:.2f}",
+            monitor="val_loss",  # Metric to monitor
+            mode="min",  # Mode can be 'min' for loss or 'max' for accuracy/metrics
+            save_last=True,  # Save the last epoch's model
+            save_top_k=1,  # Save the best model
+            verbose=True
+        )
+
+        # create profiler if requested
+        profiler = SimpleProfiler() if options.profile else None
+
         # Trainer
-        trainer = Trainer(max_epochs=options.max_epochs, logger=logger, log_every_n_steps=50)
+        trainer = Trainer(
+            max_epochs=options.max_epochs,
+            logger=logger,
+            log_every_n_steps=50,
+            profiler=profiler,
+            callbacks=[checkpoint_callback, early_stopping]
+        )
 
         # Train the model
         trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
 
-        # Test the model
+        # Save additional information about the best model
+        best_model_path = checkpoint_callback.best_model_path
+        print(f"Best model saved at {best_model_path}")
+
+        # Test the model (if needed)
         # test_loader = DataLoader(test_dataset, batch_size=options.batch_size, shuffle=False,
         #                          num_workers=options.num_workers, persistent_workers=True)
         # trainer.test(model, test_loader)
 
-        # Save the trained model
-        model_path = Path(options.log_dir) / f"{model.__class__.__name__}.ckpt"
-        trainer.save_checkpoint(model_path)
-
-        print(f"Model {model.__class__.__name__} saved at {model_path}")
         print(f"Logs are available at {logger.log_dir}")
 
     @staticmethod
