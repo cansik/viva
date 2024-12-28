@@ -68,8 +68,9 @@ class DemoMode(VivaBaseMode):
     def run(self):
         args = self._parse_args()
         checkpoint_path = Path(args.checkpoint)
+        block_size = int(args.block_size)
 
-        self.predictor = TCNPredictor(checkpoint_path, 15)
+        self.predictor = TCNPredictor(checkpoint_path, block_size)
 
         def run(data: vg.ResultDict) -> vg.ResultDict:
             image = data[DEFAULT_IMAGE_KEY]
@@ -110,5 +111,6 @@ class DemoMode(VivaBaseMode):
     def _parse_args() -> argparse.Namespace:
         parser = argparse.ArgumentParser(prog="viva demo")
         parser.add_argument("checkpoint", type=str, help="Checkpoint to load for inference.")
+        parser.add_argument("--block-size", type=int, default=15, help="Block size.")
         vg.VisionGraph.add_params(parser)
         return parser.parse_args()
