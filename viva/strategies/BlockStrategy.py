@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from functools import partial
-from typing import Callable, Type, Union
+from typing import Callable, Type, Union, Dict
 
 import pytorch_lightning as pl
 from visiongraph import vg
@@ -11,13 +11,37 @@ from viva.data.augmentations.FilterLandmarkIndices import FilterLandmarkIndices
 from viva.data.augmentations.FlattenLandmarks import FlattenLandmarks
 from viva.data.augmentations.NormalizeLandmarks import NormalizeLandmarks
 from viva.data.augmentations.OneHotEncodeLabels import OneHotEncodeLabels
+from viva.models.SimpleMLPClassifier import SimpleMLPClassifier
 from viva.models.TCNLandmarkClassifier import TCNLandmarkClassifier
+from viva.models.TransformerLandmarkClassifier import TransformerLandmarkClassifier
 from viva.strategies.BaseTrainStrategy import BaseTrainStrategy, T, BaseTrainOptions
+
+INPUT_SIZE_FEATURES_148 = len(vg.BlazeFaceMesh.FEATURES_148) * 3
+
+
+@dataclass
+class NetworkConfig:
+    network_factory: Callable[["BlockStrategyOptions"], pl.LightningModule]
+    flatten_full: bool = False
+
+
+BLOCK_STRATEGY_NETWORKS: Dict[str, NetworkConfig] = {
+    "tcn": NetworkConfig(
+        lambda _: TCNLandmarkClassifier(input_size=INPUT_SIZE_FEATURES_148)
+    ),
+    "mlp": NetworkConfig(
+        lambda x: SimpleMLPClassifier(input_size=x.block_size * INPUT_SIZE_FEATURES_148),
+        flatten_full=True
+    ),
+    "transformer": NetworkConfig(
+        lambda x: TransformerLandmarkClassifier(input_size=INPUT_SIZE_FEATURES_148, seq_length=x.block_size)
+    ),
+}
 
 
 @dataclass
 class BlockStrategyOptions(BaseTrainOptions):
-    pass
+    network: str = "tcn"
 
 
 class BlockStrategy(BaseTrainStrategy[BlockStrategyOptions]):
@@ -28,9 +52,12 @@ class BlockStrategy(BaseTrainStrategy[BlockStrategyOptions]):
     def options(self) -> T:
         return self._options
 
+    @property
+    def network_config(self) -> NetworkConfig:
+        return BLOCK_STRATEGY_NETWORKS[self._options.network]
+
     def create_lighting_module(self) -> pl.LightningModule:
-        # return SimpleMLPClassifier(input_size=15 * len(vg.BlazeFaceMesh.FEATURES_148) * 3)
-        return TCNLandmarkClassifier(input_size=len(vg.BlazeFaceMesh.FEATURES_148) * 3)
+        return self.network_config.network_factory(self._options)
 
     @property
     def dataset_type(self) -> Union[Type[FaceLandmarkDataset], Callable[..., FaceLandmarkDataset]]:
@@ -40,7 +67,7 @@ class BlockStrategy(BaseTrainStrategy[BlockStrategyOptions]):
         ]
 
         augmentations = [
-            FlattenLandmarks(full=False),
+            FlattenLandmarks(full=self.network_config.flatten_full),
             CollapseLabels(),
             OneHotEncodeLabels()
         ]

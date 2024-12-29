@@ -34,6 +34,8 @@ class TrainMode(VivaBaseMode):
         options: BaseTrainOptions = strategy.options
         options.overwrite_options(training_overrides)
 
+        self.console.print(options)
+
         # Load datasets
         data = json.loads(dataset_path.read_text(encoding="utf-8"))
 
