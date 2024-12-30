@@ -81,6 +81,7 @@ class TrainMode(VivaBaseMode):
 
         # create profiler if requested
         profiler = SimpleProfiler() if options.profile else None
+        precision = 16 if options.mixed else None
 
         # Trainer
         trainer = Trainer(
@@ -88,7 +89,8 @@ class TrainMode(VivaBaseMode):
             logger=logger,
             log_every_n_steps=50,
             profiler=profiler,
-            callbacks=[checkpoint_callback, early_stopping]
+            callbacks=[checkpoint_callback, early_stopping],
+            precision=precision
         )
 
         # Train the model

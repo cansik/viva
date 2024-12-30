@@ -13,6 +13,7 @@ class BaseTrainOptions:
     batch_size: int = 32
     max_epochs: int = 100
     num_workers: int = 4
+    mixed: bool = False
 
     # dataset
     block_size: int = 15
