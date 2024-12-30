@@ -77,11 +77,18 @@ class DemoMode(VivaBaseMode):
             face_mesh_results: vg.ResultList[vg.BlazeFaceMesh] = data["face_mesh"]
 
             if len(face_mesh_results) > 0:
-                is_speaking = self.predictor.predict(face_mesh_results[0])
+                face_mesh = face_mesh_results[0]
+                is_speaking = self.predictor.predict(face_mesh)
 
                 if is_speaking:
                     cv2.putText(image, f"Speaking!", (15, 30),
                                 cv2.FONT_HERSHEY_PLAIN, 1, (0, 255, 0))
+
+                h, w = image.shape[:2]
+                for lm_index in face_mesh.FEATURES_148:
+                    lm = face_mesh.landmarks[lm_index]
+                    center = round(lm.x * w), round(lm.y * h)
+                    cv2.circle(image, center, 2, (0, 0, 255), -1)
 
             return data
 
@@ -97,7 +104,7 @@ class DemoMode(VivaBaseMode):
             # annotate result
             .then(
                 vg.custom(run),
-                vg.ResultAnnotator(),
+                # vg.ResultAnnotator(),
                 vg.ImagePreview("Preview")
             )
             .build()

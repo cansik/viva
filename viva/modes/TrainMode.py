@@ -15,7 +15,7 @@ from viva.strategies.BaseTrainStrategy import BaseTrainStrategy, BaseTrainOption
 from viva.strategies.BlockStrategy import BlockStrategy
 
 train_strategies: Dict[str, Type[BaseTrainStrategy]] = {
-    "block-tcn": BlockStrategy
+    "block": BlockStrategy
 }
 
 
