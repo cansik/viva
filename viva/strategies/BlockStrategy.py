@@ -12,6 +12,7 @@ from viva.data.augmentations.FlattenLandmarks import FlattenLandmarks
 from viva.data.augmentations.NormalizeLandmarks import NormalizeLandmarks
 from viva.data.augmentations.OneHotEncodeLabels import OneHotEncodeLabels
 from viva.models.ImprovedTCNLandmarkClassifier import ImprovedTCNLandmarkClassifier
+from viva.models.LSTMLandmarkClassifier import LSTMLandmarkClassifier
 from viva.models.SimpleMLPClassifier import SimpleMLPClassifier
 from viva.models.TCNLandmarkClassifier import TCNLandmarkClassifier
 from viva.models.TransformerLandmarkClassifier import TransformerLandmarkClassifier
@@ -40,6 +41,9 @@ BLOCK_STRATEGY_NETWORKS: Dict[str, NetworkConfig] = {
     "transformer": NetworkConfig(
         lambda x: TransformerLandmarkClassifier(input_size=INPUT_SIZE_FEATURES_148, seq_length=x.block_size)
     ),
+    "lstm": NetworkConfig(
+        lambda x: LSTMLandmarkClassifier(input_size=INPUT_SIZE_FEATURES_148)
+    )
 }
 
 

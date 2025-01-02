@@ -15,6 +15,9 @@ class BaseTrainOptions:
     num_workers: int = 4
     mixed: bool = False
 
+    early_stopping: bool = True
+    early_stopping_patience: int = 5
+
     # dataset
     block_size: int = 15
 

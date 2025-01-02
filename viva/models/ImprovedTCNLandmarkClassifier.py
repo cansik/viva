@@ -13,7 +13,7 @@ class ImprovedTCNLandmarkClassifier(TCNLandmarkClassifier):
             self,
             input_size: int = 478 * 3,
             num_classes: int = 2,
-            num_channels: Tuple[int, ...] = (64 * 2, 128 * 2, 256 * 2),
+            num_channels: Tuple[int, ...] = (64, 128, 256),
             kernel_size: int = 3,
             dropout: float = 0.2,
             learning_rate: float = 1e-3,

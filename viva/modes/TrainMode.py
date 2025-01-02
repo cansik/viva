@@ -62,12 +62,15 @@ class TrainMode(VivaBaseMode):
         # TensorBoard Logger
         logger = TensorBoardLogger(save_dir=log_dir, name=model.__class__.__name__)
 
-        early_stopping = EarlyStopping(
-            monitor="val_loss",
-            mode="min",
-            patience=5,  # Number of epochs with no improvement before stopping
-            verbose=True
-        )
+        if options.early_stopping:
+            early_stopping = EarlyStopping(
+                monitor="val_loss",
+                mode="min",
+                patience=options.early_stopping_patience,
+                verbose=True
+            )
+        else:
+            early_stopping = None
 
         # Define Model Checkpoints
         checkpoint_callback = ModelCheckpoint(
