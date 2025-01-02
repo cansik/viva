@@ -133,7 +133,6 @@ class TCNLandmarkClassifier(pl.LightningModule):
         preds = torch.argmax(logits, dim=1)
         self.train_accuracy.update(preds, y.argmax(dim=1))
         self.log("train_acc", self.train_accuracy, on_step=True, on_epoch=True, prog_bar=True)
-
         self.log("train_loss", loss)
         return loss
 
@@ -146,7 +145,6 @@ class TCNLandmarkClassifier(pl.LightningModule):
         preds = torch.argmax(logits, dim=1)
         self.val_accuracy.update(preds, y.argmax(dim=1))
         self.log("val_acc", self.val_accuracy, on_step=False, on_epoch=True, prog_bar=True)
-
         self.log("val_loss", loss, prog_bar=True)
         return loss
 
