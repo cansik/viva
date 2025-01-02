@@ -30,7 +30,7 @@ class DatasetMode(VivaBaseMode):
         seed = int(args.seed)
         test_split_factor = float(args.test_split)
         val_split_factor = float(args.val_split)
-        is_equalize = bool(args.equalize)
+        is_balance = bool(args.balance)
 
         # store split in dataset full dataset file
         if output_path.is_dir():
@@ -60,9 +60,9 @@ class DatasetMode(VivaBaseMode):
         }
 
         # equalize
-        if is_equalize:
+        if is_balance:
             for key in ("train", "val", "test"):
-                dataset[key] = self._equalize_samples(dataset[key])
+                dataset[key] = self._balance_samples(dataset[key])
 
         # test dataset split
         assert len(set(dataset["train"]).intersection(set(dataset["test"]))) == 0
@@ -80,7 +80,7 @@ class DatasetMode(VivaBaseMode):
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(json.dumps(dataset, default=path_serializer, indent=2), encoding="utf-8")
 
-    def _equalize_samples(self, metadata_paths: List[Path]) -> List[Path]:
+    def _balance_samples(self, metadata_paths: List[Path]) -> List[Path]:
         # Load dataset
         dataset = FaceLandmarkDataset(metadata_paths=metadata_paths)
 
@@ -130,6 +130,6 @@ class DatasetMode(VivaBaseMode):
         parser.add_argument("--seed", type=int, default=12345, help="Seed for dataset creation.")
         parser.add_argument("--test-split", type=float, default=0.1, help="How many images will be used for test set.")
         parser.add_argument("--val-split", type=float, default=0.1, help="How many images will be used for valid set.")
-        parser.add_argument("--equalize", action="store_true",
-                            help="Equalizes the dataset to have ~same amount of samples.")
+        parser.add_argument("--balance", action="store_true",
+                            help="Balances the dataset to have ~same amount of samples.")
         return parser.parse_args()
