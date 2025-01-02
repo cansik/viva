@@ -58,5 +58,10 @@ class BaseTrainStrategy(ABC, Generic[T]):
 
     @property
     @abstractmethod
-    def dataset_type(self) -> Union[Type[FaceLandmarkDataset], Callable[..., FaceLandmarkDataset]]:
+    def train_dataset_type(self) -> Union[Type[FaceLandmarkDataset], Callable[..., FaceLandmarkDataset]]:
+        pass
+
+    @property
+    @abstractmethod
+    def test_dataset_type(self) -> Union[Type[FaceLandmarkDataset], Callable[..., FaceLandmarkDataset]]:
         pass

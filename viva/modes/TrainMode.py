@@ -39,8 +39,8 @@ class TrainMode(VivaBaseMode):
         # Load datasets
         data = json.loads(dataset_path.read_text(encoding="utf-8"))
 
-        train_dataset = strategy.dataset_type(metadata_paths=data["train"], block_length=options.block_size)
-        val_dataset = strategy.dataset_type(metadata_paths=data["val"], block_length=options.block_size)
+        train_dataset = strategy.train_dataset_type(metadata_paths=data["train"], block_length=options.block_size)
+        val_dataset = strategy.test_dataset_type(metadata_paths=data["val"], block_length=options.block_size)
 
         x, y = train_dataset[0]
         self.console.print(f"Data X Shape: {x.shape}")

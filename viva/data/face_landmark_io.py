@@ -12,10 +12,17 @@ from viva.utils.path_utils import Pathable
 
 def _load_and_transform(path: Pathable,
                         transforms: Optional[List[BaseLandmarkAugmentation]] = None) -> Optional[FaceLandmarkSeries]:
-    series = FaceLandmarkSeries.load(Path(path))
+    path = Path(path)
+    series = FaceLandmarkSeries.load(path)
+
+    if series is None:
+        return None
 
     if transforms is None:
         return series
+
+    # add source path
+    series._metadata_path = path
 
     # apply transforms
     x = series.samples

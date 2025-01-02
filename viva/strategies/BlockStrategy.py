@@ -60,7 +60,22 @@ class BlockStrategy(BaseTrainStrategy[BlockStrategyOptions]):
         return self.network_config.network_factory(self._options)
 
     @property
-    def dataset_type(self) -> Union[Type[FaceLandmarkDataset], Callable[..., FaceLandmarkDataset]]:
+    def train_dataset_type(self) -> Union[Type[FaceLandmarkDataset], Callable[..., FaceLandmarkDataset]]:
+        transforms = [
+            NormalizeLandmarks(),
+            FilterLandmarkIndices(vg.BlazeFaceMesh.FEATURES_148)
+        ]
+
+        augmentations = [
+            FlattenLandmarks(full=self.network_config.flatten_full),
+            CollapseLabels(),
+            OneHotEncodeLabels()
+        ]
+
+        return partial(FaceLandmarkDataset, transforms=transforms, augmentations=augmentations)
+
+    @property
+    def test_dataset_type(self) -> Union[Type[FaceLandmarkDataset], Callable[..., FaceLandmarkDataset]]:
         transforms = [
             NormalizeLandmarks(),
             FilterLandmarkIndices(vg.BlazeFaceMesh.FEATURES_148)

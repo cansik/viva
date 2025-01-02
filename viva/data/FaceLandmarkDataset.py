@@ -30,7 +30,7 @@ class FaceLandmarkDataset(Dataset):
             raise ValueError("Please either provide a data path or existing metadata path list!")
 
         # data
-        self.dataset: List[FaceLandmarkSeries] = []
+        self.data: List[FaceLandmarkSeries] = []
 
         # pre-processing
         self.transforms: List[BaseLandmarkAugmentation] = [] if transforms is None else transforms
@@ -42,7 +42,7 @@ class FaceLandmarkDataset(Dataset):
         self.create_data_index()
 
     def create_data_index(self):
-        self.dataset.clear()
+        self.data.clear()
         self.data_index.clear()
         self.data_count = 0
 
@@ -52,10 +52,10 @@ class FaceLandmarkDataset(Dataset):
         all_series = load_face_landmark_series_in_parallel(self.metadata_paths, self.transforms)
 
         # filter and create index
+        indices_to_remove = set()
         for i, (series, metadata_path) in enumerate(list(zip(all_series, self.metadata_paths))):
             if series is None or series.sample_count < self.block_length:
-                self.metadata_paths.pop(i)
-                all_series.pop(i)
+                indices_to_remove.add(i)
                 continue
 
             # todo: what if block size is larger than actual samples?!
@@ -63,8 +63,12 @@ class FaceLandmarkDataset(Dataset):
             self.data_index.add_range(current_index, max_index, i)
             current_index = max_index
 
+        # remove all indices
+        self.metadata_paths = [item for i, item in enumerate(self.metadata_paths) if i not in indices_to_remove]
+        all_series = [item for i, item in enumerate(all_series) if i not in indices_to_remove]
+
         self.data_count = current_index
-        self.dataset = all_series
+        self.data = all_series
 
     def _load_metadata_files(self) -> List[Path]:
         if not self.data_path.is_dir():
@@ -74,7 +78,7 @@ class FaceLandmarkDataset(Dataset):
 
     def get_series(self, index: int) -> Tuple[FaceLandmarkSeries, RangeResult]:
         range_result = self.data_index[index]
-        return self.dataset[range_result.value], range_result
+        return self.data[range_result.value], range_result
 
     def __len__(self) -> int:
         return self.data_count

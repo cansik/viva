@@ -28,6 +28,9 @@ class FaceLandmarkSeries:
     # is speaking labels (n,) bool
     speaking_labels: Optional[np.ndarray] = None
 
+    # is used on load
+    _metadata_path: Optional[Path] = None
+
     def save(self, path: Path):
         path = Path(path)
 
@@ -36,6 +39,9 @@ class FaceLandmarkSeries:
         arrays = {}
 
         for field in fields(self):
+            if field.name.startswith("_"):
+                continue
+
             value = getattr(self, field.name)
 
             if value is None:
@@ -79,3 +85,6 @@ class FaceLandmarkSeries:
 
         return obj
 
+    @property
+    def metadata_path(self) -> Optional[Path]:
+        return self._metadata_path

@@ -37,7 +37,7 @@ class InspectMode(VivaBaseMode):
         if display_normalized_landmarks:
             image = np.zeros((512, 512, 3), dtype=np.uint8)
             h, w = image.shape[:2]
-            for series in tqdm(dataset.dataset, desc="analyzing", total=len(dataset)):
+            for series in tqdm(dataset.data, desc="analyzing", total=len(dataset)):
                 samples = series.samples
                 samples[:, :, 0] = ((samples[:, :, 0] + 1) / 2) * w
                 samples[:, :, 1] = ((samples[:, :, 1] + 1) / 2) * h
@@ -52,7 +52,7 @@ class InspectMode(VivaBaseMode):
 
         speaking_count = 0
         not_speaking_count = 0
-        for series in tqdm(dataset.dataset, desc="analyzing", total=len(dataset)):
+        for series in tqdm(dataset.data, desc="analyzing", total=len(dataset)):
             speaking_labels = series.speaking_labels.flatten()
 
             speaking_count += speaking_labels.sum()
