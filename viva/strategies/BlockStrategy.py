@@ -31,7 +31,7 @@ BLOCK_STRATEGY_NETWORKS: Dict[str, NetworkConfig] = {
         lambda _: TCNLandmarkClassifier(input_size=INPUT_SIZE_FEATURES_148)
     ),
     "tcn-i": NetworkConfig(
-        lambda _: ImprovedTCNLandmarkClassifier(input_size=478 * 3) # INPUT_SIZE_FEATURES_148)
+        lambda _: ImprovedTCNLandmarkClassifier(INPUT_SIZE_FEATURES_148)
     ),
     "mlp": NetworkConfig(
         lambda x: SimpleMLPClassifier(input_size=x.block_size * INPUT_SIZE_FEATURES_148),
@@ -67,7 +67,7 @@ class BlockStrategy(BaseTrainStrategy[BlockStrategyOptions]):
     def train_dataset_type(self) -> Union[Type[FaceLandmarkDataset], Callable[..., FaceLandmarkDataset]]:
         transforms = [
             NormalizeLandmarks(),
-            # FilterLandmarkIndices(vg.BlazeFaceMesh.FEATURES_148)
+            FilterLandmarkIndices(vg.BlazeFaceMesh.FEATURES_148)
         ]
 
         augmentations = [
@@ -82,7 +82,7 @@ class BlockStrategy(BaseTrainStrategy[BlockStrategyOptions]):
     def test_dataset_type(self) -> Union[Type[FaceLandmarkDataset], Callable[..., FaceLandmarkDataset]]:
         transforms = [
             NormalizeLandmarks(),
-            # FilterLandmarkIndices(vg.BlazeFaceMesh.FEATURES_148)
+            FilterLandmarkIndices(vg.BlazeFaceMesh.FEATURES_148)
         ]
 
         augmentations = [
