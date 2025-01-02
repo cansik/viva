@@ -11,6 +11,7 @@ from viva.data.augmentations.FilterLandmarkIndices import FilterLandmarkIndices
 from viva.data.augmentations.FlattenLandmarks import FlattenLandmarks
 from viva.data.augmentations.NormalizeLandmarks import NormalizeLandmarks
 from viva.data.augmentations.OneHotEncodeLabels import OneHotEncodeLabels
+from viva.models.ImprovedTCNLandmarkClassifier import ImprovedTCNLandmarkClassifier
 from viva.models.SimpleMLPClassifier import SimpleMLPClassifier
 from viva.models.TCNLandmarkClassifier import TCNLandmarkClassifier
 from viva.models.TransformerLandmarkClassifier import TransformerLandmarkClassifier
@@ -28,6 +29,9 @@ class NetworkConfig:
 BLOCK_STRATEGY_NETWORKS: Dict[str, NetworkConfig] = {
     "tcn": NetworkConfig(
         lambda _: TCNLandmarkClassifier(input_size=INPUT_SIZE_FEATURES_148)
+    ),
+    "tcn-i": NetworkConfig(
+        lambda _: ImprovedTCNLandmarkClassifier(input_size=478 * 3) # INPUT_SIZE_FEATURES_148)
     ),
     "mlp": NetworkConfig(
         lambda x: SimpleMLPClassifier(input_size=x.block_size * INPUT_SIZE_FEATURES_148),
@@ -63,7 +67,7 @@ class BlockStrategy(BaseTrainStrategy[BlockStrategyOptions]):
     def train_dataset_type(self) -> Union[Type[FaceLandmarkDataset], Callable[..., FaceLandmarkDataset]]:
         transforms = [
             NormalizeLandmarks(),
-            FilterLandmarkIndices(vg.BlazeFaceMesh.FEATURES_148)
+            # FilterLandmarkIndices(vg.BlazeFaceMesh.FEATURES_148)
         ]
 
         augmentations = [
@@ -78,7 +82,7 @@ class BlockStrategy(BaseTrainStrategy[BlockStrategyOptions]):
     def test_dataset_type(self) -> Union[Type[FaceLandmarkDataset], Callable[..., FaceLandmarkDataset]]:
         transforms = [
             NormalizeLandmarks(),
-            FilterLandmarkIndices(vg.BlazeFaceMesh.FEATURES_148)
+            # FilterLandmarkIndices(vg.BlazeFaceMesh.FEATURES_148)
         ]
 
         augmentations = [
