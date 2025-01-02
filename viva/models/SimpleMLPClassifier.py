@@ -11,7 +11,7 @@ class SimpleMLPClassifier(pl.LightningModule):
             self,
             input_size: int,
             num_classes: int = 2,
-            hidden_units: Tuple[int, ...] = (128, 64),
+            hidden_units: Tuple[int, ...] = (512, 256, 128, 64),
             learning_rate: float = 1e-3,
             loss_fn: Callable = nn.CrossEntropyLoss()
     ):
