@@ -39,7 +39,7 @@ BLOCK_STRATEGY_NETWORKS: Dict[str, NetworkConfig] = {
         flatten_full=True
     ),
     "transformer": NetworkConfig(
-        lambda x: TransformerLandmarkClassifier(input_size=INPUT_SIZE_FEATURES_148, seq_length=x.block_size)
+        lambda x: TransformerLandmarkClassifier(input_size=INPUT_SIZE_FEATURES_148)
     ),
     "lstm": NetworkConfig(
         lambda x: LSTMLandmarkClassifier(input_size=INPUT_SIZE_FEATURES_148)
