@@ -19,7 +19,8 @@ class BaseTrainOptions:
     early_stopping_patience: int = 5
 
     # dataset
-    block_size: int = 15
+    block_length: int = 15
+    stride: int = 1
 
     # output
     log_dir: str = "runs"

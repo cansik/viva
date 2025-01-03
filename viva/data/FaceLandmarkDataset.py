@@ -18,10 +18,12 @@ class FaceLandmarkDataset(Dataset):
                  data_path: Optional[Pathable] = None,
                  metadata_paths: Optional[List[Pathable]] = None,
                  block_length: int = 15,
+                 stride: int = 1,
                  transforms: Optional[List[BaseLandmarkAugmentation]] = None,
                  augmentations: Optional[List[BaseLandmarkAugmentation]] = None):
         super().__init__()
         self.block_length = block_length
+        self.stride = stride
 
         self.data_path: Optional[Path] = Path(data_path) if data_path is not None else None
         self.metadata_paths: List[Path] = self._load_metadata_files() if data_path is not None else metadata_paths
@@ -54,12 +56,16 @@ class FaceLandmarkDataset(Dataset):
         # filter and create index
         indices_to_remove = set()
         for i, (series, metadata_path) in enumerate(list(zip(all_series, self.metadata_paths))):
-            if series is None or series.sample_count < self.block_length:
+            series: FaceLandmarkSeries
+
+            full_length = self.block_length * self.stride
+
+            if series is None or series.sample_count < full_length:
                 indices_to_remove.add(i)
                 continue
 
             # todo: what if block size is larger than actual samples?!
-            max_index = current_index + max(series.sample_count - self.block_length, 1)
+            max_index = current_index + max(series.sample_count - full_length, 1)
             self.data_index.add_range(current_index, max_index, i)
             current_index = max_index
 
@@ -87,10 +93,14 @@ class FaceLandmarkDataset(Dataset):
         series, range_result = self.get_series(index)
 
         start_index = index - range_result.start
-        end_index = start_index + self.block_length
+        end_index = start_index + (self.block_length * self.stride)
 
         x = series.samples[start_index:end_index]
         y = series.speaking_labels[start_index:end_index].astype(np.float32)
+
+        # apply stride
+        x = x[::self.stride]
+        y = y[::self.stride]
 
         # augment landmarks
         x, y = self.apply_augmentations(x, y, series, start_index, end_index)
