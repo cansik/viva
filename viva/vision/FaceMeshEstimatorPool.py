@@ -12,18 +12,30 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
+class FaceMeshWorkOptions:
+    min_face_detection_confidence: float = 0.5,
+    min_face_presence_confidence: float = 0.5,
+    min_tracking_confidence: float = 0.5,
+
+
+@dataclass
 class FaceMeshTask:
     data: np.ndarray
 
 
 class FaceMeshWorker(Process):
-    def __init__(self, worker_id: int, task_queue_size: int = 0):
+    def __init__(self, worker_id: int,
+                 task_queue_size: int = 0,
+                 options: Optional[FaceMeshWorkOptions] = None
+                 ):
         super().__init__(target=self._run_loop)
         self.worker_id = worker_id
         self.stop_requested = Event()
         self.face_mesh_estimator: Optional[vg.MediaPipeFaceMeshEstimator] = None
         self.tasks: Queue[Optional[FaceMeshTask]] = Queue(maxsize=task_queue_size)
         self.results: Queue[vg.ResultList[vg.BlazeFaceMesh]] = Queue(maxsize=task_queue_size)
+
+        self.options = options if options is not None else FaceMeshWorkOptions()
 
         # this is used to generate a monotonic time
         self.frame_ts_id = 0
@@ -36,8 +48,13 @@ class FaceMeshWorker(Process):
     def _run_loop(self):
         logger.debug(f"Worker {self.worker_id}: Starting run loop.")
         # Start face-mesh estimator
-        self.face_mesh_estimator = vg.MediaPipeFaceMeshEstimator(max_num_faces=1,
-                                                                 output_facial_transformation_matrixes=True)
+        self.face_mesh_estimator = vg.MediaPipeFaceMeshEstimator(
+            max_num_faces=1,
+            min_face_detection_confidence=self.options.min_face_detection_confidence,
+            min_face_presence_confidence=self.options.min_face_presence_confidence,
+            min_tracking_confidence=self.options.min_tracking_confidence,
+            output_facial_transformation_matrixes=True
+        )
         self.face_mesh_estimator.setup()
         logger.debug(f"Worker {self.worker_id}: FaceMeshEstimator initialized.")
 
@@ -77,15 +94,16 @@ class FaceMeshWorker(Process):
 
 
 class FaceMeshEstimatorPool:
-    def __init__(self, num_workers: int):
+    def __init__(self, num_workers: int, worker_options: Optional[FaceMeshWorkOptions] = None):
         self.num_workers = num_workers
+        self.worker_options = worker_options if worker_options is not None else FaceMeshWorkOptions()
         self.active_workers: Queue[int] = Queue()
         self.workers: List[FaceMeshWorker] = []
 
     def start(self):
         logger.debug(f"Pool: Starting {self.num_workers} workers.")
         for i in range(self.num_workers):
-            worker = FaceMeshWorker(i)
+            worker = FaceMeshWorker(i, options=self.worker_options)
             worker.start()
 
             self.workers.append(worker)
