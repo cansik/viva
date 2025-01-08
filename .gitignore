@@ -164,3 +164,5 @@ cython_debug/
 /data/
 /wildvvad/
 .DS_Store
+/runs/
+/viva-data/

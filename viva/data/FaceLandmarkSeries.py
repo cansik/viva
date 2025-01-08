@@ -22,8 +22,14 @@ class FaceLandmarkSeries:
     # samples array (n, 487, 5) float32
     samples: Optional[np.ndarray] = None
 
+    # transform matrices array (n, 4, 4) float32
+    transforms: Optional[np.ndarray] = None
+
     # is speaking labels (n,) bool
     speaking_labels: Optional[np.ndarray] = None
+
+    # is used on load
+    _metadata_path: Optional[Path] = None
 
     def save(self, path: Path):
         path = Path(path)
@@ -33,6 +39,9 @@ class FaceLandmarkSeries:
         arrays = {}
 
         for field in fields(self):
+            if field.name.startswith("_"):
+                continue
+
             value = getattr(self, field.name)
 
             if value is None:
@@ -75,3 +84,7 @@ class FaceLandmarkSeries:
                     setattr(obj, name, npz_file[name])
 
         return obj
+
+    @property
+    def metadata_path(self) -> Optional[Path]:
+        return self._metadata_path

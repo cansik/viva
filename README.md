@@ -17,15 +17,26 @@ uv sync
 - Use `viva preprocess` to process the videos in both folders.
 
 ```bash
-python -m viva preprocess ./silent
-python -m viva preprocess ./speaking --speaking
+python -m viva preprocess ./wildvvad/silent
+python -m viva preprocess ./wildvvad/speaking --speaking
 ```
+
+This takes a bit of time, but it is optimized to use multi-processing. Please use the  `--num-workers 8` command to adjust it to your CPU capability.
 
 ### Dataset
 After that, create the dataset split using the `viva dataset` tool.
 
 ```bash
-tbd
+python -m viva dataset --split ./wildvvad
+```
+
+It creates a `dataset.json` which has the paths to the necessary files.
+
+### Training
+Now, we are ready to train using the `viva train` tool.
+
+```bash
+python -m viva train wildvvad/dataset.json block-tcn
 ```
 
 ## Tools
