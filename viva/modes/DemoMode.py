@@ -13,6 +13,7 @@ from visiongraph.result.spatial.face.BlazeFaceMesh import BlazeFaceMesh
 from viva.data.augmentations.BaseLandmarkAugmentation import BaseLandmarkAugmentation
 from viva.data.augmentations.FilterLandmarkIndices import FilterLandmarkIndices
 from viva.data.augmentations.FlattenLandmarks import FlattenLandmarks
+from viva.models.ImprovedTCNLandmarkClassifier import ImprovedTCNLandmarkClassifier
 from viva.models.TCNLandmarkClassifier import TCNLandmarkClassifier
 from viva.modes.VivaBaseMode import VivaBaseMode
 from viva.utils.RollingBuffer import RollingBuffer
@@ -28,7 +29,7 @@ class TCNPredictor:
             FlattenLandmarks(full=False),
         ]
 
-        self.model = TCNLandmarkClassifier.load_from_checkpoint(str(checkpoint_path))
+        self.model = ImprovedTCNLandmarkClassifier.load_from_checkpoint(str(checkpoint_path))
         self.model.eval()
 
         # Initialize the rolling buffer
@@ -88,7 +89,7 @@ class DemoMode(VivaBaseMode):
                 for lm_index in face_mesh.FEATURES_148:
                     lm = face_mesh.landmarks[lm_index]
                     center = round(lm.x * w), round(lm.y * h)
-                    cv2.circle(image, center, 2, (0, 0, 255), -1)
+                    cv2.circle(image, center, 1, (0, 0, 255), -1)
 
             return data
 
