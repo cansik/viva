@@ -54,24 +54,19 @@ class FaceLandmarkDataset(Dataset):
         all_series = load_face_landmark_series_in_parallel(self.metadata_paths, self.transforms)
 
         # filter and create index
-        indices_to_remove = set()
-        for i, (series, metadata_path) in enumerate(list(zip(all_series, self.metadata_paths))):
+        for series_index, (series, metadata_path) in enumerate(list(zip(all_series, self.metadata_paths))):
             series: FaceLandmarkSeries
 
+            # calculate max index for the range to have data
             full_length = self.block_length * self.stride
+            max_index = (series.sample_count // full_length - 1) * full_length
 
-            if series is None or series.sample_count < full_length:
-                indices_to_remove.add(i)
+            if max_index <= 0:
+                # todo: add strategies to pad series samples (zero, freeze-last, mirror)
                 continue
 
-            # todo: what if block size is larger than actual samples?!
-            max_index = current_index + max(series.sample_count - full_length, 1)
-            self.data_index.add_range(current_index, max_index, i)
-            current_index = max_index
-
-        # remove all indices
-        self.metadata_paths = [item for i, item in enumerate(self.metadata_paths) if i not in indices_to_remove]
-        all_series = [item for i, item in enumerate(all_series) if i not in indices_to_remove]
+            self.data_index.add_range(current_index, current_index + max_index, series_index)
+            current_index += max_index
 
         self.data_count = current_index
         self.data = all_series
