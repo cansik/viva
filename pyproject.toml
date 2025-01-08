@@ -7,6 +7,10 @@ requires-python = ">=3.12"
 dependencies = [
     "ffmpegio>=0.10.0.post0",
     "lightning>=2.4.0",
+    "nncf>=2.14.1",
+    "onnx>=1.17.0",
+    "onnxsim>=0.4.36",
+    "openvino>=2024.6.0",
     "rich>=13.9.4",
     "sortedcontainers>=2.4.0",
     "tensorboard>=2.18.0",
