@@ -101,8 +101,8 @@ class DemoMode(VivaBaseMode):
                 normalized_landmarks = self.predictor.landmark_buffer.get()
 
                 is_speaking = result.speaking
-                is_speaking = result.speaking_confidence > 0.95
-                # todo: find out if softmax is necessray
+                is_speaking = result.speaking_confidence > 0.7
+                # todo: find out if softmax is necessary
                 color = (0, 255, 0) if is_speaking else (0, 0, 255)
                 text = "Speaking" if is_speaking else "Nothing"
 
