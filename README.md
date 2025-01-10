@@ -1,6 +1,10 @@
 # Viva
 Visual Voice Activity Detector (VVAD).
 
+![vvad-demo](https://github.com/user-attachments/assets/e8f454ad-0a81-4953-968b-e47b4bcdabcf)
+
+*Source: [Pexels](https://www.pexels.com/video/a-woman-reading-a-script-while-doing-a-streaming-8552830/)*
+
 ## Installation
 
 Install the required `uv` package and use it to synchronize all necessary dependencies:
