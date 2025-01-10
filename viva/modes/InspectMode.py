@@ -128,7 +128,8 @@ class InspectMode(VivaBaseMode):
             frame: np.ndarray = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
             frame = resize_image_to_fit(frame, 512, 512)
 
-            frame = annotate_landmarks(frame, series.samples[sample_index])
+            color = (0, 255, 0) if series.speaking_labels[sample_index] else (0, 0, 255)
+            frame = annotate_landmarks(frame, series.samples[sample_index], color=color, marker_size=1)
 
             cv2.imshow("Inspect", frame)
             cv2.waitKey(1)
