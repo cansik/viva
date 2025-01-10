@@ -27,6 +27,7 @@ class ExportMode(VivaBaseMode):
         dataset_path = Path(args.dataset)
         block_length = int(args.block_length)
         stride = int(args.stride)
+        use_dynamic_axis = bool(args.dynamic)
 
         # load dataset
         data = json.loads(dataset_path.read_text(encoding="utf-8"))
@@ -55,6 +56,13 @@ class ExportMode(VivaBaseMode):
             x, _ = val_dataset[0]
             input_tensor = torch.tensor(x, device=model.device).unsqueeze(0)
 
+            dynamic_axes = None
+            if use_dynamic_axis:
+                dynamic_axes = {  # Dynamic axis allows for multi-batch prediction
+                    "input": {0: "batch_size"},
+                    "output": {0: "batch_size"}
+                }
+
             torch.onnx.export(
                 model,
                 input_tensor,
@@ -62,8 +70,9 @@ class ExportMode(VivaBaseMode):
                 export_params=True,
                 opset_version=11,
                 do_constant_folding=True,
-                input_names=["sequence"],
-                output_names=["output"]
+                input_names=["input"],
+                output_names=["output"],
+                dynamic_axes=dynamic_axes
             )
 
         with self.console.status("Simplifying ONNX"):
@@ -115,4 +124,5 @@ class ExportMode(VivaBaseMode):
         parser.add_argument("--block-length", type=int, default=15,
                             help="Dataset block-length (how much data per inference block).")
         parser.add_argument("--stride", type=int, default=1, help="Stride of the samples.")
+        parser.add_argument("--dynamic", action="store_true", help="Use dynamic axis for export.")
         return parser.parse_args()
