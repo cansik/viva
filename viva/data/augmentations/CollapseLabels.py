@@ -13,5 +13,5 @@ class CollapseLabels(BaseLandmarkAugmentation):
 
     def __call__(self, x: np.ndarray, y: np.ndarray,
                  series: FaceLandmarkSeries, start_index: int, end_index: int) -> Tuple[np.ndarray, np.ndarray]:
-        # todo: maybe use average label (with sum)
-        return x, y[0]
+        average_y = np.sum(y) > len(y) / 2
+        return x, average_y
