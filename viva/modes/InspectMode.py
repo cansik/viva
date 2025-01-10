@@ -8,9 +8,11 @@ import numpy as np
 from rich.console import Console
 from rich.table import Table
 from tqdm import tqdm
+from visiongraph import vg
 
 from viva.data.FaceLandmarkDataset import FaceLandmarkDataset
 from viva.data.FaceLandmarkSeries import FaceLandmarkSeries
+from viva.data.augmentations.FilterLandmarkIndices import FilterLandmarkIndices
 from viva.data.augmentations.NormalizeLandmarks import NormalizeLandmarks
 from viva.modes.VivaBaseMode import VivaBaseMode
 from viva.vision.vision_utils import resize_image_to_fit, annotate_landmarks
@@ -27,10 +29,14 @@ class InspectMode(VivaBaseMode):
         block_size = int(args.block_size)
         stride = int(args.stride)
         display_normalized_landmarks = bool(args.norm)
+        display_samples = bool(args.samples)
 
         transforms = []
         if display_normalized_landmarks:
             transforms.append(NormalizeLandmarks())
+
+        if display_samples:
+            transforms.append(FilterLandmarkIndices(vg.BlazeFaceMesh.FEATURES_148))
 
         # load dataset
         data = json.loads(dataset_path.read_text(encoding="utf-8"))
@@ -38,6 +44,18 @@ class InspectMode(VivaBaseMode):
                                       block_length=block_size,
                                       stride=stride,
                                       transforms=transforms)
+
+        if display_samples:
+            sample_image_size = 256
+            image = np.zeros((sample_image_size, sample_image_size * block_size, 3), dtype=np.uint8)
+            for i in tqdm(range(len(dataset)), desc="samples"):
+                x, y = dataset[i]
+
+                self.preview_samples(x, y, image)
+
+                cv2.imshow("Samples", image)
+                cv2.waitKey(1)
+            exit(0)
 
         if display_normalized_landmarks:
             image = np.zeros((512, 512, 3), dtype=np.uint8)
@@ -57,6 +75,7 @@ class InspectMode(VivaBaseMode):
                         cv2.circle(image, center, 1, color, -1)
                     cv2.imshow("Normalized Landmarks", image)
                     cv2.waitKey(1)
+            exit(0)
 
         speaking_count = 0
         not_speaking_count = 0
@@ -114,6 +133,25 @@ class InspectMode(VivaBaseMode):
             cv2.imshow("Inspect", frame)
             cv2.waitKey(1)
 
+    def preview_samples(self, x: np.ndarray, y: np.ndarray, image: np.ndarray):
+        h, w = image.shape[:2]
+        image.fill(0)
+
+        sample_cell_size = w // len(x)
+
+        x[:, :, 0] *= sample_cell_size
+        x[:, :, 1] *= sample_cell_size
+
+        for i, sample in enumerate(x):
+            color = (0, 255, 0) if y[i] else (0, 0, 255)
+            x0 = round(i * sample_cell_size)
+
+            cv2.rectangle(image, (x0, 0), (x0 + sample_cell_size - 1, sample_cell_size - 1), (255, 255, 255), 1)
+
+            for lm in sample:
+                center = round(x0 + lm[0]), round(lm[1])
+                cv2.circle(image, center, 1, color, -1)
+
     @staticmethod
     def _parse_args() -> argparse.Namespace:
         parser = argparse.ArgumentParser(prog="viva inspect")
@@ -122,5 +160,6 @@ class InspectMode(VivaBaseMode):
         parser.add_argument("--block-size", type=int, default=15,
                             help="Dataset block-size (how much data per inference block).")
         parser.add_argument("--stride", type=int, default=1, help="Stride of the samples.")
+        parser.add_argument("--samples", action="store_true", help="Display samples.")
         parser.add_argument("--norm", action="store_true", help="Display normalized landmarks.")
         return parser.parse_args()

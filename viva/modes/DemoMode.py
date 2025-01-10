@@ -1,10 +1,12 @@
 import argparse
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, List
 
 import cv2
 import numpy as np
 import torch
+import torch.nn.functional as F
 from rich.console import Console
 from visiongraph import vg
 from visiongraph.result.ResultDict import DEFAULT_IMAGE_KEY
@@ -14,9 +16,15 @@ from viva.data.augmentations.BaseLandmarkAugmentation import BaseLandmarkAugment
 from viva.data.augmentations.FilterLandmarkIndices import FilterLandmarkIndices
 from viva.data.augmentations.FlattenLandmarks import FlattenLandmarks
 from viva.models.ImprovedTCNLandmarkClassifier import ImprovedTCNLandmarkClassifier
-from viva.models.TCNLandmarkClassifier import TCNLandmarkClassifier
 from viva.modes.VivaBaseMode import VivaBaseMode
 from viva.utils.RollingBuffer import RollingBuffer
+
+
+@dataclass
+class VVADResult:
+    speaking: bool
+    speaking_confidence: float
+    non_speaking_confidence: float
 
 
 class TCNPredictor:
@@ -35,23 +43,31 @@ class TCNPredictor:
         # Initialize the rolling buffer
         feature_shape = len(vg.BlazeFaceMesh.FEATURES_148) * 3,
         self.buffer = RollingBuffer(block_size=block_size, feature_shape=feature_shape)
+        self.landmark_buffer = RollingBuffer(block_size=block_size, feature_shape=(478, 3))
 
-    def predict(self, face_mesh: BlazeFaceMesh) -> bool:
-        landmarks = self._transform_landmarks(face_mesh.normalize_landmarks())
+    def predict(self, face_mesh: BlazeFaceMesh) -> VVADResult:
+        landmarks = face_mesh.normalize_landmarks()
+        self.landmark_buffer.add(landmarks)
+
+        landmarks = self._transform_landmarks(landmarks)
 
         # Add landmarks to the rolling buffer
         self.buffer.add(landmarks)
 
         # Get the current buffer state and convert to a PyTorch tensor
-        tensor_landmarks = torch.tensor(self.buffer.get(), dtype=torch.float32).unsqueeze(0)
+        data = self.buffer.get()
+        tensor_landmarks = torch.tensor(data, dtype=torch.float32).unsqueeze(0)
         tensor_landmarks = tensor_landmarks.to(self.model.device)
 
         # Perform prediction
         logits = self.model(tensor_landmarks)
+        softmax = F.softmax(logits, dim=1)
         predicted_class = torch.argmax(logits, dim=1).item()  # Get the predicted class
 
         # Return the prediction as a boolean for binary classification
-        return bool(predicted_class)
+        return VVADResult(bool(predicted_class),
+                          speaking_confidence=float(softmax[0][1]),
+                          non_speaking_confidence=float(softmax[0][0]))
 
     def _transform_landmarks(self, x: np.ndarray) -> np.ndarray:
         x = np.expand_dims(x, axis=0)
@@ -73,23 +89,47 @@ class DemoMode(VivaBaseMode):
 
         self.predictor = TCNPredictor(checkpoint_path, block_size)
 
+        norm_image = np.zeros((512, 512, 3), dtype=np.uint8)
+
         def run(data: vg.ResultDict) -> vg.ResultDict:
             image = data[DEFAULT_IMAGE_KEY]
             face_mesh_results: vg.ResultList[vg.BlazeFaceMesh] = data["face_mesh"]
 
             if len(face_mesh_results) > 0:
                 face_mesh = face_mesh_results[0]
-                is_speaking = self.predictor.predict(face_mesh)
+                result = self.predictor.predict(face_mesh)
+                normalized_landmarks = self.predictor.landmark_buffer.get()
 
-                if is_speaking:
-                    cv2.putText(image, f"Speaking!", (15, 30),
-                                cv2.FONT_HERSHEY_PLAIN, 1, (0, 255, 0))
+                is_speaking = result.speaking
+                is_speaking = result.speaking_confidence > 0.7
+                # todo: find out if softmax is necessary
+                color = (0, 255, 0) if is_speaking else (0, 0, 255)
+                text = "Speaking" if is_speaking else "Nothing"
+
+                cv2.putText(image,
+                            f"{text} ({result.speaking_confidence:.2f} | {result.non_speaking_confidence:.2f})",
+                            (15, 30), cv2.FONT_HERSHEY_PLAIN, 1, color)
 
                 h, w = image.shape[:2]
                 for lm_index in face_mesh.FEATURES_148:
                     lm = face_mesh.landmarks[lm_index]
                     center = round(lm.x * w), round(lm.y * h)
-                    cv2.circle(image, center, 1, (0, 0, 255), -1)
+                    cv2.circle(image, center, 1, color, -1)
+
+                # visualize normalisation
+                h, w = norm_image.shape[:2]
+                samples = normalized_landmarks
+                samples[:, :, 0] = ((samples[:, :, 0] + 1) / 2) * w
+                samples[:, :, 1] = h - ((samples[:, :, 1] + 1) / 2) * h
+
+                color = (0, 255, 255)
+
+                norm_image.fill(0)
+                sample = samples[-1]
+                for lm in sample:
+                    center = round(lm[0]), round(lm[1])
+                    cv2.circle(norm_image, center, 1, color, -1)
+                cv2.imshow("Normalized Landmarks", norm_image)
 
             return data
 
