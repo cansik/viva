@@ -3,7 +3,7 @@ from concurrent.futures import as_completed, ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Sequence
 
 import cv2
 import ffmpegio
@@ -35,7 +35,8 @@ class VideoPreProcessor:
                  data_path: Pathable,
                  output_path: Pathable,
                  options: Optional[VideoPreProcessingOptions] = None,
-                 num_workers: int = 4):
+                 num_workers: int = 4,
+                 num_face_mesh_workers: int = 4):
         self.data_path = Path(data_path)
         if not self.data_path.exists():
             raise FileNotFoundError(f"{self.data_path} does not exist!")
@@ -46,11 +47,10 @@ class VideoPreProcessor:
         self.videos_paths = get_files(data_path, "*.mov", "*.mp4", "*.mkv", "*.avi", recursive=True)
 
         # create face mesh estimator pool
-        self.face_mesh_pool = FaceMeshEstimatorPool(self.num_workers)
+        self.face_mesh_pool = FaceMeshEstimatorPool(num_face_mesh_workers)
 
     def process(self):
-        # startup pol
-        self.face_mesh_pool.start()
+        self._start_processors()
 
         # Create tasks
         tasks = [
@@ -99,12 +99,18 @@ class VideoPreProcessor:
                         future.result()
                         progress.advance(overall_task_id)
 
-        self.face_mesh_pool.stop()
+        self._stop_processors()
         end_time = time.time()
         print(f"It took {str(timedelta(seconds=end_time - start_time))} seconds to process.")
 
+    def _start_processors(self):
+        self.face_mesh_pool.start()
+
+    def _stop_processors(self):
+        self.face_mesh_pool.stop()
+
     def _process_task(self, task: VideoPreProcessingTask, progress: Progress):
-        task_id = progress.add_task(description=f"Processing {task.video_path.name}", total=100)
+        task_id = progress.add_task(description=f"{task.video_path.name}", total=1)
 
         video_path = task.video_path
         result_path = task.result_path
@@ -122,8 +128,12 @@ class VideoPreProcessor:
         video_width = int(video_info["width"])
         video_height = int(video_info["height"])
 
-        # setup progressbar
-        progress.update(task_id, total=total_video_frames)
+        # setup progress bar
+        progress.update(task_id, total=total_video_frames + 1, description=f"Transcribing {task.video_path.name}")
+
+        # generate speaking_labels for each frame
+        frames_speaking_labels = self._generate_speaking_labels(task, total_video_frames, video_duration_ms)
+        progress.update(task_id, advance=1, description=f"Processing {task.video_path.name}")
 
         video_frame_indices = []
         samples = []
@@ -154,7 +164,7 @@ class VideoPreProcessor:
                         video_frame_indices.append(frame_index)
                         samples.append(landmarks)
                         transforms.append(transform)
-                        is_speaking_labels.append(options.is_speaking)
+                        is_speaking_labels.append(frames_speaking_labels[frame_index])
 
                         if options.is_debug:
                             preview = frame.copy()
@@ -178,3 +188,8 @@ class VideoPreProcessor:
         progress.update(task_id, completed=total_video_frames)
         progress.remove_task(task_id)
         return result_path
+
+    def _generate_speaking_labels(self, task: VideoPreProcessingTask,
+                                  video_frame_count: int,
+                                  video_duration_ms: float) -> Sequence[bool]:
+        return [task.options.is_speaking] * video_frame_count

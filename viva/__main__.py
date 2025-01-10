@@ -1,8 +1,12 @@
 import argparse
+import logging
 import sys
 from typing import Dict, Type, Tuple, List
 
 from rich.console import Console
+
+# setup logging
+logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
 
 from viva.modes.DatasetMode import DatasetMode
 from viva.modes.DemoMode import DemoMode

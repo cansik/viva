@@ -6,16 +6,14 @@ from typing import List, Optional
 import numpy as np
 from visiongraph import vg
 
-# Set up logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class FaceMeshWorkOptions:
-    min_face_detection_confidence: float = 0.5,
-    min_face_presence_confidence: float = 0.5,
-    min_tracking_confidence: float = 0.5,
+    min_face_detection_confidence: float = 0.5
+    min_face_presence_confidence: float = 0.5
+    min_tracking_confidence: float = 0.5
 
 
 @dataclass
