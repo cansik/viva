@@ -3,6 +3,7 @@ from typing import Sequence
 
 import ffmpegio
 import numpy as np
+import yaml
 
 from viva.audio.WhisperWorkerPool import WhisperWorkerPool
 from viva.data.VideoPreProcessor import VideoPreProcessor, VideoPreProcessingOptions, VideoPreProcessingTask
@@ -16,10 +17,12 @@ class AudioVisionPreProcessor(VideoPreProcessor):
                  options: Optional[VideoPreProcessingOptions] = None,
                  num_workers: int = 4,
                  num_face_mesh_workers: int = 4,
-                 num_whisper_workers: int = 1):
+                 num_whisper_workers: int = 1,
+                 cache_whisper_output: bool = True):
         super().__init__(data_path, output_path, options, num_workers, num_face_mesh_workers)
 
         self.whisper_pool = WhisperWorkerPool(num_whisper_workers)
+        self.cache_whisper_output = cache_whisper_output
 
     def _start_processors(self):
         super()._start_processors()
@@ -39,10 +42,17 @@ class AudioVisionPreProcessor(VideoPreProcessor):
         fs, x = ffmpegio.audio.read(str(task.video_path), sample_fmt="dbl", ac=1, ar=16000)
         x = x.reshape(-1)
 
+        # todo: enable caching whisper results
+
         # run whisper inference
         whisper_worker = self.whisper_pool.acquire()
         result = whisper_worker.process_audio(x)
         self.whisper_pool.release(whisper_worker)
+
+        # store whisper output
+        if self.cache_whisper_output:
+            yaml_text = yaml.dump(result, default_flow_style=False)
+            task.result_path.with_suffix(".yml").write_text(yaml_text, encoding="utf-8")
 
         # labels
         speaking_labels = np.full(video_frame_count, False)
