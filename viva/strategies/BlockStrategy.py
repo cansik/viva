@@ -11,6 +11,7 @@ from viva.data.augmentations.FilterLandmarkIndices import FilterLandmarkIndices
 from viva.data.augmentations.FlattenLandmarks import FlattenLandmarks
 from viva.data.augmentations.NormalizeLandmarks import NormalizeLandmarks
 from viva.data.augmentations.OneHotEncodeLabels import OneHotEncodeLabels
+from viva.data.augmentations.RandomNoiseAugmentation import RandomNoiseAugmentation
 from viva.models.ImprovedTCNLandmarkClassifier import ImprovedTCNLandmarkClassifier
 from viva.models.LSTMLandmarkClassifier import LSTMLandmarkClassifier
 from viva.models.SimpleMLPClassifier import SimpleMLPClassifier
@@ -50,6 +51,7 @@ BLOCK_STRATEGY_NETWORKS: Dict[str, NetworkConfig] = {
 @dataclass
 class BlockStrategyOptions(BaseTrainOptions):
     network: str = "tcn"
+    noise_augmentation: bool = False
 
 
 class BlockStrategy(BaseTrainStrategy[BlockStrategyOptions]):
@@ -79,6 +81,9 @@ class BlockStrategy(BaseTrainStrategy[BlockStrategyOptions]):
             CollapseLabels(),
             OneHotEncodeLabels()
         ]
+
+        if self._options.noise_augmentation:
+            augmentations.insert(0, RandomNoiseAugmentation(0.1, clip=True))
 
         return partial(FaceLandmarkDataset, transforms=transforms, augmentations=augmentations)
 
