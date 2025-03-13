@@ -28,6 +28,9 @@ class FaceLandmarkSeries:
     # is speaking labels (n,) bool
     speaking_labels: Optional[np.ndarray] = None
 
+    # blend_shapes array (n, 52) float32
+    blend_shapes: Optional[np.ndarray] = None
+
     # is used on load
     _metadata_path: Optional[Path] = None
 

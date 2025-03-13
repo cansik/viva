@@ -139,6 +139,7 @@ class VideoPreProcessor:
         samples = []
         transforms = []
         is_speaking_labels = []
+        blend_shapes = []
 
         face_mesh_estimator = self.face_mesh_pool.acquire()
         face_mesh_estimator.reset()
@@ -166,6 +167,9 @@ class VideoPreProcessor:
                         transforms.append(transform)
                         is_speaking_labels.append(frames_speaking_labels[frame_index])
 
+                        blend_shape_values = [b.value for b in face_mesh.blend_shapes]
+                        blend_shapes.append(blend_shape_values)
+
                         if options.is_debug:
                             preview = frame.copy()
                             face_mesh.annotate(preview)
@@ -179,10 +183,11 @@ class VideoPreProcessor:
 
         # create and store series
         landmark_series = FaceLandmarkSeries(str(video_path), video_width, video_height, video_fps, len(samples),
-                                             np.array(video_frame_indices, dtype=np.uint32),
-                                             np.array(samples, dtype=np.float32),
-                                             np.array(transforms, dtype=np.float32),
-                                             np.array(is_speaking_labels, dtype=bool))
+                                             video_frame_indices=np.array(video_frame_indices, dtype=np.uint32),
+                                             samples=np.array(samples, dtype=np.float32),
+                                             transforms=np.array(transforms, dtype=np.float32),
+                                             speaking_labels=np.array(is_speaking_labels, dtype=bool),
+                                             blend_shapes=np.array(blend_shapes, dtype=np.float32))
         landmark_series.save(result_path)
 
         progress.update(task_id, completed=total_video_frames)

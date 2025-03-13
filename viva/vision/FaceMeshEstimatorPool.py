@@ -51,7 +51,8 @@ class FaceMeshWorker(Process):
             min_face_detection_confidence=self.options.min_face_detection_confidence,
             min_face_presence_confidence=self.options.min_face_presence_confidence,
             min_tracking_confidence=self.options.min_tracking_confidence,
-            output_facial_transformation_matrixes=True
+            output_facial_transformation_matrixes=True,
+            output_face_blendshapes=True
         )
         self.face_mesh_estimator.setup()
         logger.debug(f"Worker {self.worker_id}: FaceMeshEstimator initialized.")
