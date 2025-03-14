@@ -14,11 +14,14 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     vg.VisionGraph.add_params(parser)
     parser.add_argument("--model_path", type=str, default="best_model.pth", help="Path to the saved model weights.")
+    parser.add_argument("--block-size", type=int, default=20, help="Blocksize")
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
+
+    block_size = int(args.block_size)
 
     # Set up the device and load the trained model.
     device = torch.device("mps" if torch.mps.is_available() else "cpu")
@@ -30,7 +33,7 @@ def main() -> None:
 
     # Create a rolling buffer to collect a fixed-length sequence.
     # Ensure block_size here matches the sequence length the model was trained on.
-    buffer = RollingBuffer(block_size=10, feature_shape=(52,))
+    buffer = RollingBuffer(block_size=block_size, feature_shape=(52,))
 
     def run(data: vg.ResultDict) -> vg.ResultDict:
         image = data[DEFAULT_IMAGE_KEY]
@@ -70,6 +73,7 @@ def main() -> None:
         )
         .then(
             vg.custom(run),
+            # vg.ResultAnnotator(),
             vg.ImagePreview("Preview")
         )
         .build()

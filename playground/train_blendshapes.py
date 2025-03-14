@@ -20,6 +20,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dropout", type=float, default=0.5, help="Dropout rate after LSTM.")
     parser.add_argument("--patience", type=int, default=5, help="Early stopping patience.")
     parser.add_argument("--save_path", type=str, default="best_model.pth", help="Path to save the best model weights.")
+    parser.add_argument("--block-size", type=int, default=20, help="Blocksize")
     return parser.parse_args()
 
 
@@ -89,6 +90,9 @@ def evaluate_accuracy(model, dataloader, device):
 def main() -> None:
     args = parse_args()
 
+    block_size = int(args.block_size)
+    stride = 1
+
     # Read dataset JSON file
     dataset_path = Path(args.dataset)
     data = json.loads(dataset_path.read_text(encoding="utf-8"))
@@ -96,20 +100,20 @@ def main() -> None:
     # Create datasets using the provided metadata paths.
     train_dataset = FaceLandmarkDataset(
         metadata_paths=data["train"],
-        block_length=10,
-        stride=1,
+        block_length=block_size,
+        stride=stride,
         use_blend_shapes=True,
     )
     val_dataset = FaceLandmarkDataset(
         metadata_paths=data["val"],
-        block_length=10,
-        stride=1,
+        block_length=block_size,
+        stride=stride,
         use_blend_shapes=True,
     )
     test_dataset = FaceLandmarkDataset(
         metadata_paths=data["test"],
-        block_length=10,
-        stride=1,
+        block_length=block_size,
+        stride=stride,
         use_blend_shapes=True,
     )
 
