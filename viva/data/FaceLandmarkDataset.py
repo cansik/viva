@@ -19,11 +19,13 @@ class FaceLandmarkDataset(Dataset):
                  metadata_paths: Optional[List[Pathable]] = None,
                  block_length: int = 15,
                  stride: int = 1,
+                 use_blend_shapes: bool = False,
                  transforms: Optional[List[BaseLandmarkAugmentation]] = None,
                  augmentations: Optional[List[BaseLandmarkAugmentation]] = None):
         super().__init__()
         self.block_length = block_length
         self.stride = stride
+        self.use_blend_shapes = use_blend_shapes
 
         self.data_path: Optional[Path] = Path(data_path) if data_path is not None else None
         self.metadata_paths: List[Path] = self._load_metadata_files() if data_path is not None else metadata_paths
@@ -90,7 +92,10 @@ class FaceLandmarkDataset(Dataset):
         start_index = index - range_result.start
         end_index = start_index + (self.block_length * self.stride)
 
-        x = series.samples[start_index:end_index]
+        if self.use_blend_shapes:
+            x = series.blend_shapes[start_index:end_index]
+        else:
+            x = series.samples[start_index:end_index]
         y = series.speaking_labels[start_index:end_index].astype(np.float32)
 
         # apply stride
