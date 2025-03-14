@@ -5,7 +5,8 @@ from typing import Optional
 import numpy as np
 
 from viva.audio import whisper
-from viva.worker.BaseWorker import BaseWorker, BaseWorkerPool
+from viva.worker.BaseWorker import BaseWorker
+from viva.worker.BaseWorkerPool import BaseWorkerPool
 
 logger = logging.getLogger(__name__)
 
@@ -25,35 +26,25 @@ class WhisperWorker(BaseWorker[WhisperTask, dict]):
         self.model_name = model_name
         self.model: Optional[whisper.BaseWhisper] = None
 
-    def _run_loop(self):
-        logger.debug(f"Worker {self.worker_id}: Starting run loop.")
-        # Load the Whisper model once when the worker starts
+    def setup(self):
         self.model = whisper.create_whisper()
-        logger.debug(f"Worker {self.worker_id}: Whisper model '{self.model_name}' loaded.")
-        # Enter the generic loop from the base class
-        super()._run_loop()
 
     def handle_task(self, task: WhisperTask) -> dict:
-        logger.debug(f"Worker {self.worker_id}: Processing audio data.")
-        result = self.model.transcribe(task.audio_data, word_timestamps=True)
-        logger.debug(f"Worker {self.worker_id}: Audio processed successfully.")
-        return result
+        return self.model.transcribe(task.audio_data, word_timestamps=True)
 
     def cleanup(self):
-        logger.debug(f"Worker {self.worker_id}: Releasing resources.")
         self.model = None
 
     def process_audio(self, audio_data: np.ndarray) -> dict:
         """
         Convenience method to submit an audio task and wait for the result.
         """
-        logger.debug(f"Worker {self.worker_id}: Submitting audio for processing.")
         task = WhisperTask(audio_data)
-        self.tasks.put(task)
-        return self.results.get()
+        future = self.submit_task(task)
+        return future.result()
 
 
-class WhisperWorkerPool(BaseWorkerPool[WhisperTask, dict]):
+class WhisperWorkerPool(BaseWorkerPool[WhisperWorker]):
     """
     A worker pool dedicated to WhisperWorkers.
     """
