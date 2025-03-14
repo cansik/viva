@@ -20,7 +20,7 @@ class VADSegment:
     end: int
 
 
-def convert_vad_results_to_segments(results: List[VADResult]) -> List[VADSegment]:
+def convert_vad_results_to_segments(results: List[VADResult], max_samples: int) -> List[VADSegment]:
     segments: List[VADSegment] = []
     current_start = None
 
@@ -39,6 +39,6 @@ def convert_vad_results_to_segments(results: List[VADResult]) -> List[VADSegment
 
     # Optionally, warn if there's a started segment that never ended
     if current_start is not None:
-        print(f"Warning: A segment started at position {current_start} never ended.")
+        segments.append(VADSegment(start=current_start, end=max_samples - 1))
 
     return segments

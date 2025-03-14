@@ -22,7 +22,7 @@ def main():
     end = time.time()
     print("VAD processing time:", end - start)
 
-    vad_segments = convert_vad_results_to_segments(results)
+    vad_segments = convert_vad_results_to_segments(results, max_samples=len(x))
 
     # read stream info for the video
     video_streams = ffmpegio.probe.video_streams_basic(str(movie_file))

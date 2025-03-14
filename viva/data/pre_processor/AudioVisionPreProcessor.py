@@ -55,9 +55,8 @@ class AudioVisionPreProcessor(VideoPreProcessor):
             task.result_path.with_suffix(".yml").write_text(yaml_text, encoding="utf-8")
 
         # labels
-        speaking_labels = np.full(video_frame_count, False)
-
-        vad_segments = convert_vad_results_to_segments(result)
+        speaking_labels = np.full(video_frame_count + 1, False)
+        vad_segments = convert_vad_results_to_segments(result, max_samples=len(x))
 
         # convert segments into video frame labels
         for segment in vad_segments:

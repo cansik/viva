@@ -5,6 +5,8 @@ from typing import Dict, Type, Tuple, List
 
 from rich.console import Console
 
+from viva.modes.VideoEncode import VideoEncodeMode
+
 # setup logging
 logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -17,6 +19,7 @@ from viva.modes.TrainMode import TrainMode
 from viva.modes.VivaBaseMode import VivaBaseMode
 
 viva_modes: Dict[str, Type[VivaBaseMode]] = {
+    "encode": VideoEncodeMode,
     "preprocess": PreProcessMode,
     "dataset": DatasetMode,
     "inspect": InspectMode,
