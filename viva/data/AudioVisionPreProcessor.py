@@ -46,7 +46,8 @@ class AudioVisionPreProcessor(VideoPreProcessor):
 
         # run whisper inference
         whisper_worker = self.whisper_pool.acquire()
-        result = whisper_worker.submit_task(WhisperTask(x))
+        future = whisper_worker.submit_task(WhisperTask(x))
+        result = future.result()
         self.whisper_pool.release(whisper_worker)
 
         # store whisper output
