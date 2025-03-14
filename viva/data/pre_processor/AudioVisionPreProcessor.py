@@ -65,8 +65,8 @@ class AudioVisionPreProcessor(VideoPreProcessor):
         # convert segments into video frame labels
         for segment in vad_segments:
             # extract timestamps in seconds
-            start_ts = segment.start
-            end_ts = segment.end
+            start_ts = segment.start / fs
+            end_ts = segment.end / fs
 
             start_frame_index = round(start_ts / video_duration_seconds * video_frame_count)
             end_frame_index = round(end_ts / video_duration_seconds * video_frame_count)
