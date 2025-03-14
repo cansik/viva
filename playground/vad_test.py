@@ -32,7 +32,6 @@ def main():
     video_duration_ms = float(video_info["duration"] * 1000)
     video_fps = float(video_info["frame_rate"])
     total_video_frames = int(video_duration_ms / video_fps)
-    video_frame_length_ms = 1000 / video_fps
     video_width = int(video_info["width"])
     video_height = int(video_info["height"])
 
@@ -42,7 +41,7 @@ def main():
     # convert VAD segments into per-frame speaking labels
     speaking_labels = np.full(video_frame_count, False, dtype=bool)
     for segment in vad_segments:
-        # extract timestamps in seconds
+        # convert timestamps from audio samples to seconds
         start_ts = segment.start / fs
         end_ts = segment.end / fs
 
@@ -54,9 +53,11 @@ def main():
 
         speaking_labels[start_frame_index:end_frame_index] = True
 
-    # playback video and overlay timeline and text
+    # playback controls variables
+    paused = False
     frame_index = 0
-    timeline_height = 50  # height (in pixels) of the timeline bar
+    timeline_height = 50  # height in pixels of the timeline bar
+
     with ffmpegio.open(str(movie_file), "rv", blocksize=100) as fin:
         for frames in fin:
             video_frames: np.ndarray = frames
@@ -66,40 +67,53 @@ def main():
                 preview = frame.copy()
 
                 # create the timeline bar
-                timeline_bar = np.full((timeline_height, video_width, 3), 255,
-                                       dtype=np.uint8)  # initialize with white (non-speaking)
-                # map each column (pixel) to a video frame index
+                timeline_bar = np.full((timeline_height, video_width, 3), 255, dtype=np.uint8)
+                # Map each column (pixel) to a video frame index.
                 cols = np.arange(video_width)
                 timeline_frame_indices = (cols / video_width * video_frame_count).astype(int)
                 timeline_frame_indices = np.clip(timeline_frame_indices, 0, video_frame_count - 1)
-                # assign blue to columns corresponding to speaking frames (blue in BGR: (255, 0, 0))
+                # Mark speaking regions in blue (BGR: (255, 0, 0))
                 speaking_mask = speaking_labels[timeline_frame_indices]
                 timeline_bar[:, speaking_mask] = (255, 0, 0)
 
-                # compute the cursor x-position on the timeline based on the current frame index
+                # Draw a red vertical cursor (BGR: (0, 0, 255)) for the current frame.
                 cursor_x = int(frame_index / video_frame_count * video_width)
-                # draw a vertical red line (red in BGR: (0, 0, 255)) as a cursor on the timeline
                 cv2.line(timeline_bar, (cursor_x, 0), (cursor_x, timeline_height - 1), (0, 0, 255), thickness=2)
 
-                # add text label on the preview image (e.g., top left corner)
+                # Overlay text label for the speaking status.
                 current_status = "Speaking" if speaking_labels[frame_index] else "Not Speaking"
-                # To ensure the text is visible on all backgrounds, we first draw black text as an outline
                 cv2.putText(preview, current_status, (10, 30),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), thickness=3)
                 cv2.putText(preview, current_status, (10, 30),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), thickness=1)
 
-                # combine the preview and timeline bar vertically
+                # Combine the video frame and timeline bar.
                 combined = np.vstack([preview, timeline_bar])
-
                 cv2.imshow("Preview", combined)
-                # wait for 1 ms (adjust if you want to control playback speed)
-                if cv2.waitKey(0) & 0xFF == ord("q"):
+
+                # Use a different waitKey delay based on the play/pause state.
+                if paused:
+                    # When paused, wait indefinitely until a key is pressed.
+                    key = cv2.waitKey(0) & 0xFF
+                else:
+                    # When playing, wait a short period (1 ms) for a key press.
+                    key = cv2.waitKey(1) & 0xFF
+
+                # Process key commands.
+                if key == ord("q"):
+                    cv2.destroyAllWindows()
                     return
+                elif key == ord("p"):
+                    # Toggle pause.
+                    paused = not paused
+                elif key == ord("n") and paused:
+                    # Skip one frame while remaining paused.
+                    pass
 
                 frame_index += 1
-
-    cv2.destroyAllWindows()
+                if frame_index >= video_frame_count:
+                    cv2.destroyAllWindows()
+                    return
 
 
 if __name__ == "__main__":
