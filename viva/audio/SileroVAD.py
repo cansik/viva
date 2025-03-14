@@ -12,7 +12,8 @@ class SileroVAD:
                  threshold: float = 0.5,
                  sampling_rate: int = 16000,
                  min_silence_duration_ms: int = 100,
-                 speech_pad_ms: int = 30
+                 speech_pad_ms_start: int = 30,
+                 speech_pad_ms_end: int = 30,
                  ):
 
         if model is None:
@@ -30,7 +31,8 @@ class SileroVAD:
             raise ValueError('VADIterator supports sampling rates of 8000 or 16000 only.')
 
         self.min_silence_samples = sampling_rate * min_silence_duration_ms / 1000
-        self.speech_pad_samples = sampling_rate * speech_pad_ms / 1000
+        self.speech_pad_samples_start = sampling_rate * speech_pad_ms_start / 1000
+        self.speech_pad_samples_end = sampling_rate * speech_pad_ms_end / 1000
 
         # states
         self.triggered: bool = False
@@ -81,7 +83,7 @@ class SileroVAD:
 
         if speech_prob >= self.threshold and not self.triggered:
             self.triggered = True
-            speech_start = self.current_sample - self.speech_pad_samples
+            speech_start = self.current_sample - self.speech_pad_samples_start
             return VADResult(VADState.Started, int(speech_start))
 
         if speech_prob < self.threshold - 0.15 and self.triggered:
@@ -90,7 +92,7 @@ class SileroVAD:
             if self.current_sample - self.temp_end < self.min_silence_samples:
                 return None
             else:
-                speech_end = self.temp_end + self.speech_pad_samples
+                speech_end = self.temp_end + self.speech_pad_samples_end
                 self.temp_end = 0
                 self.triggered = False
                 return VADResult(VADState.Ended, int(speech_end))

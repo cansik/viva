@@ -15,7 +15,7 @@ def main():
     fs, x = ffmpegio.audio.read(str(movie_file), sample_fmt="dbl", ac=1, ar=16000)
     x = x.reshape(-1)
 
-    vad = SileroVAD(sampling_rate=fs)
+    vad = SileroVAD(sampling_rate=fs, speech_pad_ms_start=300, speech_pad_ms_end=30)
 
     start = time.time()
     results = vad.process(x.copy())

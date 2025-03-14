@@ -23,7 +23,7 @@ class SileroVADWorker(BaseWorker[SileroVADTask, List[VADResult]]):
         self.model: Optional[SileroVAD] = None
 
     def setup(self):
-        self.model = SileroVAD()
+        self.model = SileroVAD(speech_pad_ms_start=300, speech_pad_ms_end=30)
 
     def handle_task(self, task: SileroVADTask) -> List[VADResult]:
         self.model.reset_states()
