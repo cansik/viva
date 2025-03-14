@@ -124,7 +124,7 @@ def main() -> None:
 
     # Set up device and model.
     device = torch.device("mps" if torch.mps.is_available() else "cpu")
-    model = LSTMClassifier(input_dim=52, hidden_dim=64, num_layers=4, num_classes=2, dropout=args.dropout).to(device)
+    model = LSTMClassifier(input_dim=52, hidden_dim=128, num_layers=2, num_classes=2, dropout=args.dropout).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2, verbose=True)

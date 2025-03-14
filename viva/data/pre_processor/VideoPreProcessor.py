@@ -46,6 +46,10 @@ class VideoPreProcessor:
         self.options = options if options is not None else VideoPreProcessingOptions()
         self.videos_paths = get_files(data_path, "*.mov", "*.mp4", "*.mkv", "*.avi", recursive=False)
 
+        self.clean: bool = False
+        if not self.clean:
+            self.videos_paths = [p for p in self.videos_paths if not p.with_suffix(".json").exists()]
+
         # create face mesh estimator pool
         self.face_mesh_pool = FaceMeshEstimatorPool(num_face_mesh_workers)
 

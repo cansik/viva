@@ -59,6 +59,9 @@ class FaceLandmarkDataset(Dataset):
         for series_index, (series, metadata_path) in enumerate(list(zip(all_series, self.metadata_paths))):
             series: FaceLandmarkSeries
 
+            if series is None:
+                continue
+
             # calculate max index for the range to have data
             full_length = self.block_length * self.stride
             max_index = (series.sample_count // full_length - 1) * full_length
