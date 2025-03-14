@@ -3,8 +3,8 @@ from pathlib import Path
 
 from rich.console import Console
 
-from viva.data.AudioVisionPreProcessor import AudioVisionPreProcessor
-from viva.data.VideoPreProcessor import VideoPreProcessingOptions, VideoPreProcessor
+from viva.data.pre_processor.AudioVisionPreProcessor import AudioVisionPreProcessor
+from viva.data.pre_processor.VideoPreProcessor import VideoPreProcessingOptions, VideoPreProcessor
 from viva.modes.VivaBaseMode import VivaBaseMode
 
 
@@ -33,8 +33,8 @@ class PreProcessMode(VivaBaseMode):
             p = AudioVisionPreProcessor(data_path, output_path, options,
                                         num_workers=num_workers,
                                         num_face_mesh_workers=num_face_mesh_workers,
-                                        num_whisper_workers=num_whisper_workers,
-                                        cache_whisper_output=cache_whisper_output)
+                                        num_vad_workers=num_whisper_workers,
+                                        cache_vad_output=cache_whisper_output)
         else:
             p = VideoPreProcessor(data_path, output_path, options, num_workers, num_face_mesh_workers)
         p.process()

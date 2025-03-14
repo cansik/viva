@@ -1,20 +1,9 @@
-from dataclasses import dataclass
-from enum import Enum
 from typing import Optional, Union, List
 
 import numpy as np
 import torch
 
-
-class VADState(Enum):
-    Started = 0
-    Ended = 1
-
-
-@dataclass
-class VADResult:
-    state: VADState
-    sample_position: int
+from viva.audio.VADModels import VADResult, VADState
 
 
 class SileroVAD:

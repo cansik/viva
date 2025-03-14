@@ -6,7 +6,7 @@ from viva.audio.SileroVAD import SileroVAD
 
 
 def main():
-    audio_file = "data/florian-short.mov"
+    audio_file = "data/movie.mov"
 
     fs, x = ffmpegio.audio.read(str(audio_file), sample_fmt="dbl", ac=1, ar=16000)
     x = x.reshape(-1)

@@ -1,12 +1,15 @@
 from typing import Optional
+from typing import Optional
 from typing import Sequence
 
 import ffmpegio
 import numpy as np
 import yaml
 
-from viva.audio.WhisperWorkerPool import WhisperWorkerPool
-from viva.data.VideoPreProcessor import VideoPreProcessor, VideoPreProcessingOptions, VideoPreProcessingTask
+from viva.audio.SileroVADWorkerPool import SileroVADWorkerPool
+from viva.audio.VADModels import convert_vad_results_to_segments
+from viva.data.pre_processor.VideoPreProcessor import VideoPreProcessor, VideoPreProcessingOptions, \
+    VideoPreProcessingTask
 from viva.utils.path_utils import Pathable
 
 
@@ -17,20 +20,20 @@ class AudioVisionPreProcessor(VideoPreProcessor):
                  options: Optional[VideoPreProcessingOptions] = None,
                  num_workers: int = 4,
                  num_face_mesh_workers: int = 4,
-                 num_whisper_workers: int = 1,
-                 cache_whisper_output: bool = True):
+                 num_vad_workers: int = 1,
+                 cache_vad_output: bool = True):
         super().__init__(data_path, output_path, options, num_workers, num_face_mesh_workers)
 
-        self.whisper_pool = WhisperWorkerPool(num_whisper_workers)
-        self.cache_whisper_output = cache_whisper_output
+        self.vad_pool = SileroVADWorkerPool(num_vad_workers)
+        self.cache_whisper_output = cache_vad_output
 
     def _start_processors(self):
         super()._start_processors()
-        self.whisper_pool.start()
+        self.vad_pool.start()
 
     def _stop_processors(self):
         super()._stop_processors()
-        self.whisper_pool.stop()
+        self.vad_pool.stop()
 
     def _generate_speaking_labels(self, task: VideoPreProcessingTask,
                                   video_frame_count: int,
@@ -42,14 +45,14 @@ class AudioVisionPreProcessor(VideoPreProcessor):
         fs, x = ffmpegio.audio.read(str(task.video_path), sample_fmt="dbl", ac=1, ar=16000)
         x = x.reshape(-1)
 
-        # todo: enable caching whisper results
+        # todo: enable caching vad results
 
-        # run whisper inference
-        whisper_worker = self.whisper_pool.acquire()
-        result = whisper_worker.process_audio(x)
-        self.whisper_pool.release(whisper_worker)
+        # run vad inference
+        vad_worker = self.vad_pool.acquire()
+        result = vad_worker.process_audio(x)
+        self.vad_pool.release(vad_worker)
 
-        # store whisper output
+        # store vad output
         if self.cache_whisper_output:
             yaml_text = yaml.dump(result, default_flow_style=False)
             task.result_path.with_suffix(".yml").write_text(yaml_text, encoding="utf-8")
@@ -57,11 +60,13 @@ class AudioVisionPreProcessor(VideoPreProcessor):
         # labels
         speaking_labels = np.full(video_frame_count, False)
 
+        vad_segments = convert_vad_results_to_segments(result)
+
         # convert segments into video frame labels
-        for segment in result["segments"]:
+        for segment in vad_segments:
             # extract timestamps in seconds
-            start_ts = segment["start"]
-            end_ts = segment["end"]
+            start_ts = segment.start
+            end_ts = segment.end
 
             start_frame_index = round(start_ts / video_duration_seconds * video_frame_count)
             end_frame_index = round(end_ts / video_duration_seconds * video_frame_count)
