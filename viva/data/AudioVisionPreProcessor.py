@@ -5,7 +5,7 @@ import ffmpegio
 import numpy as np
 import yaml
 
-from viva.audio.WhisperWorkerPool import WhisperWorkerPool
+from viva.audio.WhisperWorkerPool import WhisperWorkerPool, WhisperTask
 from viva.data.VideoPreProcessor import VideoPreProcessor, VideoPreProcessingOptions, VideoPreProcessingTask
 from viva.utils.path_utils import Pathable
 
@@ -46,7 +46,7 @@ class AudioVisionPreProcessor(VideoPreProcessor):
 
         # run whisper inference
         whisper_worker = self.whisper_pool.acquire()
-        result = whisper_worker.process_audio(x)
+        result = whisper_worker.submit_task(WhisperTask(x))
         self.whisper_pool.release(whisper_worker)
 
         # store whisper output
