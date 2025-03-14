@@ -23,7 +23,7 @@ class PreProcessMode(VivaBaseMode):
         num_face_mesh_workers = int(args.num_face_mesh_workers)
         num_whisper_workers = int(args.num_whisper_workers)
         stream_block_size = int(args.block_size)
-        cache_whisper_output = bool(args.cache_whisper)
+        cache_vad_output = bool(args.cache_vad)
 
         options = VideoPreProcessingOptions(stream_block_size=stream_block_size,
                                             is_speaking=is_speaking,
@@ -34,7 +34,7 @@ class PreProcessMode(VivaBaseMode):
                                         num_workers=num_workers,
                                         num_face_mesh_workers=num_face_mesh_workers,
                                         num_vad_workers=num_whisper_workers,
-                                        cache_vad_output=cache_whisper_output)
+                                        cache_vad_output=cache_vad_output)
         else:
             p = VideoPreProcessor(data_path, output_path, options, num_workers, num_face_mesh_workers)
         p.process()
@@ -52,6 +52,6 @@ class PreProcessMode(VivaBaseMode):
         parser.add_argument("--num-workers", default=4, type=int, help="Num parallel worker threads.")
         parser.add_argument("--num-face-mesh-workers", default=4, type=int, help="Num parallel face-mesh workers.")
         parser.add_argument("--audio", action="store_true", help="Use audio to predict speaking label.")
-        parser.add_argument("--cache-whisper", action="store_true", help="Cache whisper output.")
-        parser.add_argument("--num-whisper-workers", default=1, type=int, help="Num parallel whisper workers.")
+        parser.add_argument("--cache-vad", action="store_true", help="Cache vad output.")
+        parser.add_argument("--num-whisper-workers", default=4, type=int, help="Num parallel whisper workers.")
         return parser.parse_args()

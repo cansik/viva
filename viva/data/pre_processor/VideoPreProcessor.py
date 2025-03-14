@@ -123,7 +123,8 @@ class VideoPreProcessor:
         # extract video information
         video_duration_seconds = float(video_info["duration"])
         video_fps = float(video_info["frame_rate"])
-        total_video_frames = int(video_duration_seconds * video_fps)
+        # total_video_frames = int(video_duration_seconds * video_fps)
+        total_video_frames = int(video_info["nb_frames"])
         video_frame_length_ms = 1000 / video_fps
         video_width = int(video_info["width"])
         video_height = int(video_info["height"])
