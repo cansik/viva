@@ -37,10 +37,7 @@ class AudioVisionPreProcessor(VideoPreProcessor):
 
     def _generate_speaking_labels(self, task: VideoPreProcessingTask,
                                   video_frame_count: int,
-                                  video_duration_ms: float) -> Sequence[bool]:
-        # video duration
-        video_duration_seconds = video_duration_ms / 1000
-
+                                  video_duration_seconds: float) -> Sequence[bool]:
         # read audio stream for whisper
         fs, x = ffmpegio.audio.read(str(task.video_path), sample_fmt="dbl", ac=1, ar=16000)
         x = x.reshape(-1)

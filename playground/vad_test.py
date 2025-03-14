@@ -29,14 +29,13 @@ def main():
     video_info = video_streams[0]
 
     # extract video information
-    video_duration_ms = float(video_info["duration"] * 1000)
+    video_duration_seconds = float(video_info["duration"])
     video_fps = float(video_info["frame_rate"])
-    total_video_frames = int(video_duration_ms / video_fps)
+    total_video_frames = int(video_duration_seconds * video_fps)
     video_width = int(video_info["width"])
     video_height = int(video_info["height"])
 
     video_frame_count = total_video_frames
-    video_duration_seconds = video_duration_ms / 1000
 
     # convert VAD segments into per-frame speaking labels
     speaking_labels = np.full(video_frame_count, False, dtype=bool)

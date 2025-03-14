@@ -121,9 +121,9 @@ class VideoPreProcessor:
         video_info = video_streams[0]
 
         # extract video information
-        video_duration_ms = float(video_info["duration"] * 1000)
+        video_duration_seconds = float(video_info["duration"])
         video_fps = float(video_info["frame_rate"])
-        total_video_frames = int(video_duration_ms / video_fps)
+        total_video_frames = int(video_duration_seconds * video_fps)
         video_frame_length_ms = 1000 / video_fps
         video_width = int(video_info["width"])
         video_height = int(video_info["height"])
@@ -132,7 +132,7 @@ class VideoPreProcessor:
         progress.update(task_id, total=total_video_frames + 1, description=f"Transcribing {task.video_path.name}")
 
         # generate speaking_labels for each frame
-        frames_speaking_labels = self._generate_speaking_labels(task, total_video_frames, video_duration_ms)
+        frames_speaking_labels = self._generate_speaking_labels(task, total_video_frames, video_duration_seconds)
         progress.update(task_id, advance=1, description=f"Processing {task.video_path.name}")
 
         video_frame_indices = []
@@ -196,5 +196,5 @@ class VideoPreProcessor:
 
     def _generate_speaking_labels(self, task: VideoPreProcessingTask,
                                   video_frame_count: int,
-                                  video_duration_ms: float) -> Sequence[bool]:
+                                  video_duration_seconds: float) -> Sequence[bool]:
         return [task.options.is_speaking] * video_frame_count
