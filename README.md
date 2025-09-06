@@ -1,5 +1,8 @@
-# Viva
-Visual Voice Activity Detector (VVAD).
+# Viva - Visual Voice Activity Detector (VVAD)
+
+Viva aims to detect voice activity solely by analyzing a person's face. This approach is useful in situations where relying on acoustic detection is challenging, such as in museums, where beamforming and source localization require specialized hardware and careful calibration. For chatbot scenarios, where accurate turn-taking and interruption handling are crucial, a visual method can be more effective, as the camera naturally limits the field of view. It can even support multi-person interactions with a chatbot, allowing the system to identify and respond to the specific person who is speaking without needing to separate overlapping voices.
+
+This repository serves as a playground for a VVAD system built on facial landmark analysis over time. It includes an automatic video annotation pipeline, training code, and tools for testing and evaluation. Please note that this is an active research project and still under development.
 
 ![vvad-demo](https://github.com/user-attachments/assets/e8f454ad-0a81-4953-968b-e47b4bcdabcf)
 
