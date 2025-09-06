@@ -18,6 +18,9 @@ def _load_and_transform(path: Pathable,
     if series is None:
         return None
 
+    if len(series.samples) == 0:
+        return None
+
     if transforms is None:
         return series
 

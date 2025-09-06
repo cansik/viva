@@ -41,7 +41,7 @@ def collate_fn(batch):
 
 
 class LSTMClassifier(nn.Module):
-    def __init__(self, input_dim=52, hidden_dim=64, num_layers=1, num_classes=2, dropout=0.5):
+    def __init__(self, input_dim=52, hidden_dim=64, num_layers=4, num_classes=2, dropout=0.5):
         super(LSTMClassifier, self).__init__()
         self.lstm = nn.LSTM(input_dim, hidden_dim, num_layers, batch_first=True)
         self.dropout = nn.Dropout(dropout)
@@ -91,7 +91,7 @@ def main() -> None:
     args = parse_args()
 
     block_size = int(args.block_size)
-    stride = 1
+    stride = 2
 
     # Read dataset JSON file
     dataset_path = Path(args.dataset)
@@ -124,7 +124,7 @@ def main() -> None:
 
     # Set up device and model.
     device = torch.device("mps" if torch.mps.is_available() else "cpu")
-    model = LSTMClassifier(input_dim=52, hidden_dim=128, num_layers=2, num_classes=2, dropout=args.dropout).to(device)
+    model = LSTMClassifier(input_dim=52, hidden_dim=64, num_layers=4, num_classes=2, dropout=args.dropout).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2, verbose=True)

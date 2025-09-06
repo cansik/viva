@@ -26,7 +26,7 @@ def main() -> None:
     # Set up the device and load the trained model.
     device = torch.device("mps" if torch.mps.is_available() else "cpu")
     print(f"using device: {device}")
-    model = LSTMClassifier(input_dim=52, hidden_dim=128, num_layers=2, num_classes=2, dropout=0.5).to(device)
+    model = LSTMClassifier(input_dim=52, hidden_dim=64, num_layers=4, num_classes=2, dropout=0.5).to(device)
     model_data = torch.load(args.model_path, map_location=device)
     model.load_state_dict(model_data)
     model.eval()

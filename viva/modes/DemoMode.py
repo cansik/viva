@@ -101,14 +101,14 @@ class DemoMode(VivaBaseMode):
                 normalized_landmarks = self.predictor.landmark_buffer.get()
 
                 is_speaking = result.speaking
-                is_speaking = result.speaking_confidence > 0.7
+                is_speaking = result.speaking_confidence > 0.4
                 # todo: find out if softmax is necessary
                 color = (0, 255, 0) if is_speaking else (0, 0, 255)
                 text = "Speaking" if is_speaking else "Nothing"
 
                 cv2.putText(image,
                             f"{text} ({result.speaking_confidence:.2f} | {result.non_speaking_confidence:.2f})",
-                            (15, 30), cv2.FONT_HERSHEY_PLAIN, 1, color)
+                            (15, 30), cv2.FONT_HERSHEY_PLAIN, 1.2, color)
 
                 h, w = image.shape[:2]
                 for lm_index in face_mesh.FEATURES_148:

@@ -9,7 +9,7 @@ from viva.audio.VADModels import convert_vad_results_to_segments
 
 
 def main():
-    movie_file = "data/florian-short.mov"
+    movie_file = "data/tV-_9N7UVpw.mp4"
 
     # read the audio from the movie file
     fs, x = ffmpegio.audio.read(str(movie_file), sample_fmt="dbl", ac=1, ar=16000)

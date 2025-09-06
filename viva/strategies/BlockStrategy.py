@@ -36,6 +36,9 @@ BLOCK_STRATEGY_NETWORKS: Dict[str, NetworkConfig] = {
     "tcn-i": NetworkConfig(
         lambda _: ImprovedTCNLandmarkClassifier(INPUT_SIZE_FEATURES_148)
     ),
+    "tcn-i-f": NetworkConfig(
+        lambda _: ImprovedTCNLandmarkClassifier(INPUT_SIZE_FEATURES_148, use_focal_loss=True)
+    ),
     "mlp": NetworkConfig(
         lambda x: SimpleMLPClassifier(input_size=x.block_length * INPUT_SIZE_FEATURES_148),
         flatten_full=True

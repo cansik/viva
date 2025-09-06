@@ -59,8 +59,18 @@ class DatasetMode(VivaBaseMode):
             "val": metadata_paths[:valid_count]
         }
 
+        # add counts
+        dataset["count"] = {
+            "train": len(dataset["train"]),
+            "test": len(dataset["test"]),
+            "val": len(dataset["val"])
+        }
+
         # equalize
         if is_balance:
+            print("Before Balance:")
+            print(json.dumps(dataset["count"], indent=2))
+
             for key in ("train", "val", "test"):
                 dataset[key] = self._balance_samples(dataset[key])
 
@@ -76,6 +86,9 @@ class DatasetMode(VivaBaseMode):
             "val": len(dataset["val"])
         }
 
+        print("Dataset Count:")
+        print(json.dumps(dataset["count"], indent=2))
+
         # write output
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(json.dumps(dataset, default=path_serializer, indent=2), encoding="utf-8")
@@ -89,6 +102,9 @@ class DatasetMode(VivaBaseMode):
         non_speaking_samples = []
 
         for series in dataset.data:
+            if series is None:
+                continue
+
             if series.speaking_labels is not None:
                 # check if series is more speaking or non-speaking
                 is_speaking = np.sum(series.speaking_labels) > len(series.speaking_labels) / 2
